@@ -202,6 +202,40 @@
 
   async function loadConfig() { return fetchJSON("/config/config.json"); }
 
+    // Apply optional theme colors from config to CSS variables.
+    // Accepts either cfg.ui.colors or cfg.colors, with keys in camelCase or kebab-case.
+    function applyThemeColors(cfg) {
+      if (!cfg) return;
+      const colors = cfg.ui?.colors || cfg.colors;
+      if (!colors || typeof colors !== 'object') return;
+      const root = document.documentElement;
+      const get = (...keys) => {
+        for (const k of keys) {
+          const v = colors[k];
+          if (typeof v === 'string' && v.trim()) return v.trim();
+        }
+        return undefined;
+      };
+      const mappings = [
+        ['--accent-1', get('accent1','accent-1')],
+        ['--accent-2', get('accent2','accent-2')],
+        ['--accent-3', get('accent3','accent-3')],
+        ['--text', get('text')],
+        ['--ink', get('ink')],
+        ['--bg-overlay', get('bgOverlay','bg-overlay')],
+        ['--border', get('border')],
+        ['--card', get('card')],
+      ];
+      for (const [cssVar, value] of mappings) {
+        if (value) root.style.setProperty(cssVar, value);
+      }
+      // Optional: allow customizing max content width and blur strength
+      const maxw = get('maxw','maxWidth');
+      if (maxw) root.style.setProperty('--maxw', typeof maxw === 'number' ? `${maxw}px` : maxw);
+      const blur = get('blur');
+      if (blur) root.style.setProperty('--blur', blur);
+    }
+
     async function fetchPhotoList(cfg) {
       const url = cfg.slideshow?.dynamicPhotosUrl;
       if (!url) {
@@ -236,6 +270,8 @@
     }
 
     function populateFromConfig(cfg) {
+  // Theme first, so any content renders with final colors
+  try { applyThemeColors(cfg); } catch {}
       // Page title: prefer ui.title or title in config, else coupleNames
       try {
         const siteTitle = cfg.ui?.title || cfg.title || cfg.coupleNames || document.title;
@@ -407,7 +443,9 @@
     (async function init(){
       try {
         const cfg = await loadConfig();
-        populateFromConfig(cfg);
+  // Apply theme asap; then populate content and start slideshow
+  applyThemeColors(cfg);
+  populateFromConfig(cfg);
         await startSlideshow(cfg);
         $("loading").classList.add("hide");
         $("content").classList.remove("hide");

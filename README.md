@@ -1,6 +1,6 @@
-# Wedding Site — Dusty Blue, Dynamic Photos, No RSVP
+# Eternal Vows -- Wedding Website
 
-A single-file wedding website with a soft “dusty blue” design, dynamic background slideshow, and no RSVP section. It includes a Share Photos button that links to your album (Google Photos, Dropbox file request, Pixieset, etc.).
+Eternal Vows is a customizable, self‑hosted wedding website template for sharing all of your event information in one place. Configure names, date, location, story, schedule, venue details (with map), registry links, FAQs, and optional photo‑sharing links via a simple JSON file—no rebuild required. A lightweight Node + Express server powers a dynamic background slideshow that auto‑refreshes as you add images. Run locally with Node or deploy easily with Docker/Compose.
 
 ## Features
 - Clean, modern single-page design with elegant typography
@@ -54,35 +54,53 @@ Edit `config/config.json`. All fields are optional; unset sections/buttons are h
 - `faqs`: Array of `{ q, a }`
 - `slideshow`: `{ intervalMs, transitionMs, photoRefreshSeconds, dynamicPhotosUrl }` (defaults work out of the box)
 - `ui`: `{ monogram, footerNote, autoRefreshSeconds }`
+  - Optional color palette: `ui.colors` or top-level `colors`.
+    - Supported keys: `accent1`, `accent2`, `accent3`, `text`, `ink`, `bgOverlay`, `border`, `card`, `maxw`, `blur`.
+    - Values are CSS colors or raw CSS for `blur` (e.g., `saturate(140%) blur(6px)`) and unit values for `maxw` (e.g., `1024px`).
 
 Example:
 
 ```json
 {
-	"coupleNames": "Partner One & Partner Two",
-	"dateDisplay": "Month 00, 20XX",
-	"locationShort": "City, ST",
-	"story": "Share a short story about how you met...",
-	"schedule": [
-		{ "time": "3:00 PM", "title": "Ceremony", "details": "Ceremony location details" },
-		{ "time": "4:00 PM", "title": "Cocktail Hour", "details": "Cocktail hour location details" },
-		{ "time": "5:30 PM", "title": "Reception", "details": "Reception location details" }
-	],
-	"venue": {
-		"name": "Venue Name",
-		"address": "123 Main St, City, ST 00000",
-		"mapUrl": "https://maps.google.com",
-		"mapCta": "Open Map",
-		"notes": "Parking and arrival notes."
-	},
-	"photoUpload": { "label": "Upload to Shared Album", "url": "https://example.com/album" },
-	"registry": [
-		{ "label": "Amazon", "url": "https://example.com/amazon" },
-		{ "label": "Target", "url": "https://example.com/target" }
-	],
-	"faqs": [ { "q": "Dress code?", "a": "Semi-formal." } ],
-	"slideshow": { "dynamicPhotosUrl": "/api/photos", "intervalMs": 6000, "transitionMs": 1200 },
-	"ui": { "monogram": "You’re invited to the wedding of", "footerNote": "With love, ..." }
+  "coupleNames": "Partner One & Partner Two",
+  "dateDisplay": "Month 00, 20XX",
+  "locationShort": "City, ST",
+  "story": "Share a short story about how you met...",
+  "schedule": [
+    { "time": "3:00 PM", "title": "Ceremony", "details": "Ceremony location details" },
+    { "time": "4:00 PM", "title": "Cocktail Hour", "details": "Cocktail hour location details" },
+    { "time": "5:30 PM", "title": "Reception", "details": "Reception location details" }
+  ],
+  "venue": {
+    "name": "Venue Name",
+    "address": "123 Main St, City, ST 00000",
+    "mapUrl": "https://maps.google.com",
+    "mapCta": "Open Map",
+    "notes": "Parking and arrival notes."
+  },
+  "photoUpload": { "label": "Upload to Shared Album", "url": "https://example.com/album" },
+  "registry": [
+    { "label": "Amazon", "url": "https://example.com/amazon" },
+    { "label": "Target", "url": "https://example.com/target" }
+  ],
+  "faqs": [ { "q": "Dress code?", "a": "Semi-formal." } ],
+  "slideshow": { "dynamicPhotosUrl": "/api/photos", "intervalMs": 6000, "transitionMs": 1200 },
+  "ui": {
+    "monogram": "You’re invited to the wedding of",
+    "footerNote": "With love, ...",
+    "colors": {
+      "accent1": "#a3bcd6",
+      "accent2": "#d7e5f3",
+      "accent3": "#f7eddc",
+      "text": "#ffffff",
+      "ink": "#2b2a2a",
+      "bgOverlay": "rgba(20,18,18,0.35)",
+      "border": "rgba(255,255,255,0.12)",
+      "card": "rgba(255,255,255,0.08)",
+      "maxw": "1024px",
+      "blur": "saturate(140%) blur(6px)"
+    }
+  }
 }
 ```
 
@@ -129,15 +147,15 @@ Example `docker-compose.yml` if you prefer compose:
 
 ```yaml
 services:
-	wedding:
-		image: wedding-site:latest # or build: .
-		ports:
-			- "5500:5500"
-		environment:
-			- PORT=5500
-		volumes:
-			- ./config:/app/config
-		restart: unless-stopped
+  wedding:
+    image: wedding-site:latest # or build: .
+    ports:
+      - "5500:5500"
+    environment:
+      - PORT=5500
+    volumes:
+      - ./config:/app/config
+    restart: unless-stopped
 ```
 
 ## CI (GitHub Actions)
@@ -148,17 +166,17 @@ services:
 
 ## Troubleshooting
 - Server exits immediately (code 1):
-	- Run `npm install` first to ensure dependencies are present.
-	- Check the terminal error message; ensure `config/config.json` is valid JSON.
-	- Ensure the `config/` and `config/photos/` folders exist and are readable.
-	- Port already in use? Set a different `PORT` or stop the other process.
+  - Run `npm install` first to ensure dependencies are present.
+  - Check the terminal error message; ensure `config/config.json` is valid JSON.
+  - Ensure the `config/` and `config/photos/` folders exist and are readable.
+  - Port already in use? Set a different `PORT` or stop the other process.
 - Photos don’t appear:
-	- Verify images are in `config/photos` with supported extensions.
-	- Check `http://localhost:5500/api/photos` returns a list.
-	- Open DevTools → Network to see if image requests 404.
+  - Verify images are in `config/photos` with supported extensions.
+  - Check `http://localhost:5500/api/photos` returns a list.
+  - Open DevTools → Network to see if image requests 404.
 - Sharp install issues on Windows:
-	- Try `npm install` again; Sharp provides prebuilt binaries for most Node versions.
-	- Ensure Node 18+ and a stable internet connection during install.
+  - Try `npm install` again; Sharp provides prebuilt binaries for most Node versions.
+  - Ensure Node 18+ and a stable internet connection during install.
 
 ## Privacy notes
 Keep private details out of version control. The provided `config/config.json` has placeholders—replace them locally or configure secrets in your deployment environment.

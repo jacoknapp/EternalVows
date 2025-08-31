@@ -69,6 +69,18 @@
     "title": "Partner One & Partner Two — Wedding",
     "monogram": "You\u2019re invited to the wedding of",
     "footerNote": "With love, Partner One & Partner Two \u2022 #YourWeddingHashtag",
-    "autoRefreshSeconds": 0
+    "autoRefreshSeconds": 0,
+    "colors": {
+      "accent1": "#a3bcd6",
+      "accent2": "#d7e5f3",
+      "accent3": "#f7eddc",
+      "text": "#ffffff",
+      "ink": "#2b2a2a",
+      "bgOverlay": "rgba(20,18,18,0.35)",
+      "border": "rgba(255,255,255,0.12)",
+      "card": "rgba(255,255,255,0.08)",
+      "maxw": "1024px",
+      "blur": "saturate(140%) blur(6px)"
+    }
   }
 }
