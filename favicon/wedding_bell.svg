@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+	<!-- Scale the bell up around the center to fill more of the canvas -->
+	<g transform="translate(32,32) scale(1.25) translate(-32,-32)">
+		<path d="M32 4c-8 0-14 8-14 16v12c0 4-2 8-6 10v4h40v-4c-4-2-6-6-6-10V20c0-8-6-16-14-16zM24 56a8 8 0 0016 0H24z" fill="#d4af37"/>
+	</g>
+</svg>

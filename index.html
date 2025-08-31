@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wedding of Partner A &amp; Partner B</title>
+  <meta name="description" content="Join us for our wedding celebration!" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <!-- Favicons (served from /favicon) -->
+  <link rel="icon" type="image/svg+xml" href="/favicon/wedding_bell.svg">
+  <link rel="mask-icon" href="/favicon/wedding_bell.svg" color="#a3bcd6">
+  <link rel="shortcut icon" href="/favicon/wedding_bell_favicon.ico" sizes="any">
+  <link rel="manifest" href="/favicon/site.webmanifest">
+  <!-- PNG icons -->
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/wedding_bell_16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/wedding_bell_32x32.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="/favicon/wedding_bell_48x48.png">
+  <link rel="icon" type="image/png" sizes="64x64" href="/favicon/wedding_bell_64x64.png">
+  <link rel="icon" type="image/png" sizes="128x128" href="/favicon/wedding_bell_128x128.png">
+  <link rel="icon" type="image/png" sizes="256x256" href="/favicon/wedding_bell_256x256.png">
+  <!-- Apple touch icons -->
+  <link rel="apple-touch-icon" sizes="76x76" href="/favicon/apple_touch_icon_76x76.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="/favicon/apple_touch_icon_120x120.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="/favicon/apple_touch_icon_152x152.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple_touch_icon_180x180.png">
+  <style>
+    :root{
+      --bg-overlay: rgba(20, 18, 18, 0.35);
+      --text: #fff;
+      --ink: #2b2a2a;
+      --accent-1: #a3bcd6;  /* dusty blue */
+      --accent-2: #d7e5f3;  /* light blue */
+      --accent-3: #f7eddc;  /* champagne/ivory */
+      --card: rgba(255,255,255,0.08);
+      --border: rgba(255,255,255,0.12);
+      --blur: saturate(140%) blur(6px);
+      --maxw: 1024px;
+    }
+    * { box-sizing: border-box }
+  html, body { margin:0; height:100%; background:#101010; color:var(--text); line-height:1.65; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif; }
+  html { scroll-behavior: smooth; }
+    body::before, body::after {
+      content:""; position: fixed; width: 260px; height: 260px; z-index: 1; pointer-events:none; opacity:.55; mix-blend-mode: screen; filter: drop-shadow(0 10px 20px rgba(0,0,0,.25));
+      background: no-repeat center / contain url("data:image/svg+xml,%3Csvg width='512' height='512' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.45'%3E%3Cpath d='M60 420c80-40 120-140 70-210 60 20 120-10 140-60 40 30 50 90 10 140 70-30 120 20 110 80-16 96-144 128-330 50z'/%3E%3Cpath d='M100 440c40-10 80-50 70-100 30 10 70-10 80-40 20 20 20 50-5 80 45-15 70 15 60 45-12 45-95 60-205 15z'/%3E%3C/g%3E%3C/svg%3E");
+    }
+    body::before { top: 0; left: 0; transform: translate(-10%,-10%) rotate(0deg); }
+    body::after  { bottom: 0; right: 0; transform: translate(10%,10%) rotate(180deg); }
+  .bg { position: fixed; inset: 0; overflow:hidden; z-index:0;
+      /* Lighter gradient fallback so the page isn't black before photos load */
+      background:
+        radial-gradient(1200px circle at 75% 10%, rgba(163,188,214,0.40), transparent 55%),
+        radial-gradient(900px circle at 15% 85%, rgba(247,237,220,0.35), transparent 50%),
+        linear-gradient(180deg, #1b2230, #131a25);
+    }
+  #content { position: relative; z-index: 2; }
+    .bg-slide { position:absolute; inset:0; background-position:center; background-size:cover; opacity:0; transition: opacity 1.2s ease-in-out; will-change: opacity; }
+    .bg-slide.active { opacity: 1; }
+  .bg::after { content:""; position:absolute; inset:0; background: rgba(20,18,18,0.18); }
+  .slideshow-on .bg::after { background: rgba(20,18,18,0.35); }
+    header.hero { min-height: 100vh; min-height: 100svh; display:grid; place-items:center; padding: 5rem 1.2rem 3rem; position:relative; }
+    /* Prefer dynamic viewport units when available for accurate fold behavior */
+    @supports (height: 100dvh) {
+      header.hero { min-height: 100dvh; }
+    }
+    .hero .inner {
+      position:relative; z-index:2; width:min(92vw, 840px);
+      background: linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0.06));
+      border:1px solid var(--border); border-radius:22px; backdrop-filter: var(--blur);
+      padding: 2.2rem 1.4rem;
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+      text-align: center; /* Center names, date, and location */
+    }
+  .monogram { display:block; width:max-content; margin-left:0; margin-right:auto; padding:.25rem 1rem; border-radius:999px; border:1px solid rgba(255,255,255,.25);
+      background: radial-gradient(ellipse at top left, var(--accent-1) 0%, transparent 70%), radial-gradient(ellipse at bottom right, var(--accent-2) 0%, transparent 60%);
+      font-family: "Playfair Display", serif; letter-spacing: 1px; opacity:.95; }
+    h1.names { margin: .35rem 0 .25rem; font-family: "Great Vibes", cursive; font-size: clamp(2.2rem, 8vw, 4.2rem); font-weight: 400; letter-spacing:.4px; text-shadow: 0 2px 18px rgba(0,0,0,.45); }
+    .tagline { font-size: clamp(1rem, 2.6vw, 1.2rem); opacity:.96 }
+    .date { display:inline-block; margin-top:.4rem; font-weight:600; letter-spacing:.8px; background: linear-gradient(90deg, var(--accent-3), var(--accent-1)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .btns { display:flex; flex-wrap:wrap; gap:.7rem; justify-content:center; margin-top:1.1rem; }
+    .btn { appearance:none; border:1px solid rgba(255,255,255,.28); color:#fff; background: transparent;
+      padding:.75rem 1.1rem; border-radius:999px; cursor:pointer; text-decoration:none; font-weight:600; transition: transform .12s ease, background .2s ease, border-color .2s ease; backdrop-filter: var(--blur); }
+    .btn.primary { background: transparent; color:#fff; border-color: rgba(255,255,255,.28); }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(255,255,255,.6); background: rgba(255,255,255,.06); }
+    section { position:relative; padding: 3rem 1.2rem; }
+    .container { width:min(92vw, var(--maxw)); margin:0 auto; padding:1.8rem;
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.06));
+      border:1px solid var(--border); border-radius:18px; backdrop-filter: var(--blur);
+      box-shadow: 0 16px 50px rgba(0,0,0,.3); }
+    h2 { font-family:"Playfair Display", serif; font-size: clamp(1.6rem, 4vw, 2.2rem); margin:.25rem 0 1rem; position:relative; }
+    h2::after { content:""; display:block; height:10px; margin-top:.45rem;
+      background: radial-gradient(circle at left, var(--accent-1), transparent 60%), radial-gradient(circle at center, var(--accent-3), transparent 55%), radial-gradient(circle at right, var(--accent-2), transparent 60%);
+      mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); border-radius: 999px; }
+    .grid { display:grid; gap:1rem; grid-template-columns: repeat(12, 1fr); }
+    .grid > * { grid-column: span 12; }
+    @media (min-width: 860px) { .grid.two > * { grid-column: span 6; } .grid.three > * { grid-column: span 4; } }
+    .card { background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding: 1rem 1rem; }
+    .muted { opacity:.92 }
+    .row { display:grid; grid-template-columns: 1fr auto; gap:.75rem; align-items:baseline; }
+    .row + .row { margin-top:.75rem; }
+  .pill { display:inline-block; padding:.32rem .7rem; border-radius:999px; border:1px solid rgba(255,255,255,.18); font-size:.9rem; opacity:.95; color:#fff; text-decoration:none; }
+  .pill:hover { border-color: rgba(255,255,255,.5); }
+    footer { text-align:center; padding: 2.5rem 1.25rem 4.5rem; opacity:.95; }
+    a { color: var(--accent-1) }
+    .loading { text-align:center; padding:2rem; opacity:.9; }
+    .hide { display:none !important; }
+  </style>
+</head>
+<body>
+  <div class="bg" id="bg"></div>
+  <div id="loading" class="loading">Loading details…</div>
+
+  <div id="content" class="hide">
+    <header class="hero">
+      <div class="inner">
+        <span class="monogram" id="monogram">You’re invited</span>
+        <h1 class="names" id="names">Our Wedding</h1>
+        <div class="tagline">
+          <span class="date" id="dateDisplay"></span>
+          <span> • </span>
+          <span id="locationShort"></span>
+        </div>
+        <div class="btns" id="topButtons">
+          <!-- Buttons are injected from config; RSVP removed -->
+        </div>
+      </div>
+    </header>
+
+    <section id="story">
+      <div class="container">
+        <h2>Our Story</h2>
+        <p id="storyText" class="muted"></p>
+      </div>
+    </section>
+
+    <section id="schedule">
+      <div class="container">
+        <h2>Schedule</h2>
+        <div id="scheduleGrid" class="grid two"></div>
+      </div>
+    </section>
+
+    <section id="venue">
+      <div class="container">
+        <h2>Venue</h2>
+        <div class="grid two">
+          <div class="card">
+            <div class="row">
+              <strong id="venueName">Venue Name</strong>
+              <a id="venueMap" class="pill" target="_blank" rel="noopener">Open Map</a>
+            </div>
+            <div id="venueAddress" class="muted" style="margin-top:.4rem;"></div>
+          </div>
+          <div class="card">
+            <p class="muted" id="venueNotes"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="photoshare">
+      <div class="container">
+        <h2>Share Your Photos</h2>
+        <p class="muted" id="photoshareText">We’d love to see the day through your eyes. Add your pics to our shared album!</p>
+        <div class="btns" id="photoshareBtns"></div>
+      </div>
+    </section>
+
+    <section id="registry">
+      <div class="container">
+        <h2>Registry</h2>
+        <div class="btns" id="registryBtns"></div>
+      </div>
+    </section>
+
+    <section id="faqs">
+      <div class="container">
+        <h2>FAQ</h2>
+        <div id="faqList" class="grid two"></div>
+      </div>
+    </section>
+
+    <footer>
+      <div id="footerNote">Made with ♥ for family and friends.</div>
+    </footer>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+    const preload = (src) => new Promise(res => { const i = new Image(); i.onload = res; i.onerror = res; i.src = src; });
+    const preloadWithTimeout = (src, ms = 3000) => Promise.race([
+      preload(src),
+      new Promise(res => setTimeout(res, ms))
+    ]);
+
+    async function fetchJSON(url) {
+      const r = await fetch(url, { cache: "no-store" });
+      if (!r.ok) throw new Error("Failed to load " + url);
+      return r.json();
+    }
+
+  async function loadConfig() { return fetchJSON("/config/config.json"); }
+
+    async function fetchPhotoList(cfg) {
+      const url = cfg.slideshow?.dynamicPhotosUrl;
+      if (!url) {
+        console.warn("No dynamicPhotosUrl configured; skipping slideshow.");
+        return [];
+      }
+      try {
+        const data = await fetchJSON(url + (url.includes('?') ? '&' : '?') + '_ts=' + Date.now());
+        const list = (Array.isArray(data) ? data : data.files || []).map(s => s.startsWith('/') ? s : `/photos/${s}`);
+        return Array.from(new Set(list));
+      } catch (e) {
+        console.warn("Failed to fetch photo list:", e);
+        return [];
+      }
+    }
+
+    function addBtn(container, label, href, primary=false) {
+      if (!href) return;
+      const a = document.createElement('a');
+      a.className = 'btn' + (primary ? ' primary' : '');
+      a.href = href; a.textContent = label;
+      // Open external links in a new tab; keep in-page anchors in the same tab
+      try {
+        const u = new URL(href, location.href);
+        const isHash = href.startsWith('#');
+        const isExternal = !isHash && u.origin !== location.origin;
+        if (isExternal) { a.target = '_blank'; a.rel = 'noopener'; }
+      } catch {
+        // If URL parsing fails, leave as same-tab default
+      }
+      container.appendChild(a);
+    }
+
+    function populateFromConfig(cfg) {
+      // Page title: prefer ui.title or title in config, else coupleNames
+      try {
+        const siteTitle = cfg.ui?.title || cfg.title || cfg.coupleNames || document.title;
+        if (siteTitle) document.title = siteTitle;
+      } catch {}
+      $("monogram").textContent = cfg.ui?.monogram ?? "You’re invited";
+      $("names").textContent = cfg.coupleNames ?? "Our Wedding";
+      $("dateDisplay").textContent = cfg.dateDisplay ?? "";
+      $("locationShort").textContent = cfg.locationShort ?? "";
+      // Show the middle bullet only if both date and location are present
+      try {
+        const dd = $("dateDisplay");
+        const ls = $("locationShort");
+        const bullet = dd?.nextElementSibling; // the " • " span
+        const hasBoth = (dd?.textContent?.trim()?.length || 0) && (ls?.textContent?.trim()?.length || 0);
+        if (bullet) bullet.classList.toggle('hide', !hasBoth);
+      } catch {}
+      $("storyText").textContent = cfg.story ?? "";
+
+  // Top nav buttons (conditionally rendered if section exists in config)
+  const top = $("topButtons"); top.innerHTML = "";
+  const hasStory = typeof cfg.story === 'string' && cfg.story.trim().length > 0;
+  const hasSchedule = Array.isArray(cfg.schedule) && cfg.schedule.length > 0;
+  const hasVenue = !!(cfg.venue && (cfg.venue.name || cfg.venue.address || cfg.venue.notes || cfg.venue.mapUrl));
+  const uploadUrl = cfg.photoUpload?.url || cfg.photoUploadUrl;
+  const hasPhotoShare = !!uploadUrl;
+  const hasRegistry = Array.isArray(cfg.registry) && cfg.registry.length > 0;
+  const hasFaqs = Array.isArray(cfg.faqs) && cfg.faqs.length > 0;
+
+  if (hasSchedule) addBtn(top, "Schedule", "#schedule");
+  if (hasVenue) addBtn(top, "Venue", "#venue");
+  if (hasPhotoShare) addBtn(top, "Share Photos", uploadUrl, true);
+  if (hasRegistry) addBtn(top, "Registry", "#registry");
+  if (hasFaqs) addBtn(top, "FAQ", "#faqs");
+
+      // story section
+      const secStory = document.getElementById('story');
+      if (!hasStory) {
+        secStory?.classList.add('hide');
+      } else {
+        secStory?.classList.remove('hide');
+      }
+
+      // schedule section
+      const secSchedule = document.getElementById('schedule');
+      const sg = $("scheduleGrid"); sg.innerHTML = "";
+      if (!hasSchedule) {
+        secSchedule?.classList.add('hide');
+      } else {
+        secSchedule?.classList.remove('hide');
+        (cfg.schedule ?? []).forEach(it => {
+          const card = document.createElement("div");
+          card.className = "card";
+          card.innerHTML = `
+            <div class="row">
+              <strong>${it.title ?? ""}</strong>
+              <span class="pill">${it.time ?? ""}</span>
+            </div>
+            <div class="muted" style="margin-top:.4rem;">${it.details ?? ""}</div>
+          `;
+          sg.appendChild(card);
+        });
+      }
+
+      // venue section
+      const secVenue = document.getElementById('venue');
+      if (!hasVenue) {
+        secVenue?.classList.add('hide');
+      } else {
+        secVenue?.classList.remove('hide');
+        $("venueName").textContent = cfg.venue?.name ?? "";
+        $("venueAddress").textContent = cfg.venue?.address ?? "";
+        const vm = $("venueMap");
+        vm.href = cfg.venue?.mapUrl || "#";
+        vm.textContent = cfg.venue?.mapCta ?? "Open Map";
+        $("venueNotes").textContent = cfg.venue?.notes ?? "";
+      }
+
+      // photoshare section
+      const secPhoto = document.getElementById('photoshare');
+      const ps = $("photoshareBtns"); ps.innerHTML = "";
+      if (!hasPhotoShare) {
+        secPhoto?.classList.add('hide');
+      } else {
+        secPhoto?.classList.remove('hide');
+        const label = (cfg.photoUpload?.label || cfg.photoUpload?.cta || "Upload to Album");
+        const url = uploadUrl;
+        addBtn(ps, label, url, true);
+      }
+
+      // registry section
+      const secReg = document.getElementById('registry');
+      const reg = $("registryBtns"); reg.innerHTML = "";
+      if (!hasRegistry) {
+        secReg?.classList.add('hide');
+      } else {
+        secReg?.classList.remove('hide');
+        (cfg.registry ?? []).forEach(r => addBtn(reg, r.label, r.url));
+      }
+
+      // faqs section
+      const secFaq = document.getElementById('faqs');
+      const faqList = $("faqList"); faqList.innerHTML = "";
+      if (!hasFaqs) {
+        secFaq?.classList.add('hide');
+      } else {
+        secFaq?.classList.remove('hide');
+        (cfg.faqs ?? []).forEach(f => {
+          const card = document.createElement("div");
+          card.className = "card";
+          card.innerHTML = `<strong>${f.q}</strong><div class="muted" style="margin-top:.4rem;">${f.a}</div>`;
+          faqList.appendChild(card);
+        });
+      }
+
+      // footer
+      $("footerNote").textContent = cfg.ui?.footerNote ?? "Made with ♥ for family and friends.";
+    }
+
+    async function startSlideshow(cfg) {
+      const bg = $("bg");
+      const intervalMs = cfg.slideshow?.intervalMs ?? 6000;
+      const transitionMs = cfg.slideshow?.transitionMs ?? 1200;
+      let photos = await fetchPhotoList(cfg);
+      if (!photos.length) {
+        // Keep the gradient fallback background; nothing else to do.
+        return;
+      }
+
+      const slides = [document.createElement("div"), document.createElement("div")];
+      slides.forEach(s => { s.className = "bg-slide"; s.style.transitionDuration = transitionMs + "ms"; bg.appendChild(s); });
+
+  let idx = 0, cur = 0;
+  // Show the first image as soon as it's ready, but don't block too long
+  await preloadWithTimeout(photos[0], cfg.slideshow?.firstImageTimeoutMs ?? 3000);
+  slides[cur].style.backgroundImage = `url('${photos[idx]}')`;
+  slides[cur].classList.add("active");
+  document.body.classList.add('slideshow-on');
+  // Opportunistically preload the next image
+  preload(photos[1 % photos.length]);
+
+      setInterval(() => {
+        idx = (idx + 1) % photos.length;
+        const next = 1 - cur;
+        preload(photos[idx]);
+        slides[next].style.backgroundImage = `url('${photos[idx]}')`;
+        slides[next].classList.add("active");
+        slides[cur].classList.remove("active");
+        cur = next;
+      }, intervalMs);
+
+      // Auto-refresh list
+  const refreshSec = cfg.slideshow?.photoRefreshSeconds ?? 20;
+      (async function refreshLoop() {
+        while (true) {
+          await new Promise(r => setTimeout(r, refreshSec * 1000));
+          try {
+            const fresh = await fetchPhotoList(cfg);
+            const existing = new Set(photos);
+            const freshSet = new Set(fresh);
+            const newlyAdded = fresh.filter(p => !existing.has(p));
+            if (newlyAdded.length) { photos = photos.concat(newlyAdded); }
+            photos = photos.filter(p => freshSet.has(p));
+          } catch (e) { console.warn("Photo refresh failed:", e); }
+        }
+      })();
+    }
+
+    (async function init(){
+      try {
+        const cfg = await loadConfig();
+        populateFromConfig(cfg);
+        await startSlideshow(cfg);
+        $("loading").classList.add("hide");
+        $("content").classList.remove("hide");
+      } catch (e) {
+        $("loading").textContent = "Could not load site details (config.json).";
+        console.error(e);
+      }
+    })();
+  </script>
+</body>
+</html>

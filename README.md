@@ -1,0 +1,169 @@
+# Wedding Site — Dusty Blue, Dynamic Photos, No RSVP
+
+A single-file wedding website with a soft “dusty blue” design, dynamic background slideshow, and no RSVP section. It includes a Share Photos button that links to your album (Google Photos, Dropbox file request, Pixieset, etc.).
+
+## Features
+- Clean, modern single-page design with elegant typography
+- Dynamic background slideshow sourced from `config/photos` (no rebuild required)
+- Smooth in-page navigation; external links open in a new tab
+- Config-driven content (names, date, venue, schedule, registry, FAQs)
+- Optional “Share Photos” CTA at the top and in the body
+- Lightweight Node + Express server (no build step)
+
+## Project structure
+- `index.html` — UI, styling, and client JS (loads details from `config/config.json`)
+- `server.mjs` — Express server and `/api/photos` endpoint
+- `config/config.json` — Site content (names, date, venue, etc.)
+- `config/photos/` — Background slideshow images
+- `scripts/generate_placeholders.mjs` — Generates branded placeholder images using Sharp
+- `.github/workflows/docker.yml` — Optional CI to build/push a container image
+
+## Quick start (Node)
+Requirements: Node 18+ recommended.
+
+1) Install dependencies
+
+```powershell
+npm install
+```
+
+2) Start the server
+
+```powershell
+node .\server.mjs
+# then open http://localhost:5500
+```
+
+Optional: change the port via `PORT` env var (default 5500).
+
+```powershell
+$env:PORT=8080; node .\server.mjs
+```
+
+## Configure content
+Edit `config/config.json`. All fields are optional; unset sections/buttons are hidden automatically.
+
+- `coupleNames`: Display names for the hero section
+- `dateDisplay`: Friendly wedding date string
+- `locationShort`: Short city/state line under the date
+- `story`: Paragraph for “Our Story”
+- `schedule`: Array of items `{ time, title, details }`
+- `venue`: `{ name, address, mapUrl, mapCta, notes }`
+- `photoUpload`: `{ url, label? }` link to your shared album
+- `registry`: Array of `{ label, url }`
+- `faqs`: Array of `{ q, a }`
+- `slideshow`: `{ intervalMs, transitionMs, photoRefreshSeconds, dynamicPhotosUrl }` (defaults work out of the box)
+- `ui`: `{ monogram, footerNote, autoRefreshSeconds }`
+
+Example:
+
+```json
+{
+	"coupleNames": "Partner One & Partner Two",
+	"dateDisplay": "Month 00, 20XX",
+	"locationShort": "City, ST",
+	"story": "Share a short story about how you met...",
+	"schedule": [
+		{ "time": "3:00 PM", "title": "Ceremony", "details": "Ceremony location details" },
+		{ "time": "4:00 PM", "title": "Cocktail Hour", "details": "Cocktail hour location details" },
+		{ "time": "5:30 PM", "title": "Reception", "details": "Reception location details" }
+	],
+	"venue": {
+		"name": "Venue Name",
+		"address": "123 Main St, City, ST 00000",
+		"mapUrl": "https://maps.google.com",
+		"mapCta": "Open Map",
+		"notes": "Parking and arrival notes."
+	},
+	"photoUpload": { "label": "Upload to Shared Album", "url": "https://example.com/album" },
+	"registry": [
+		{ "label": "Amazon", "url": "https://example.com/amazon" },
+		{ "label": "Target", "url": "https://example.com/target" }
+	],
+	"faqs": [ { "q": "Dress code?", "a": "Semi-formal." } ],
+	"slideshow": { "dynamicPhotosUrl": "/api/photos", "intervalMs": 6000, "transitionMs": 1200 },
+	"ui": { "monogram": "You’re invited to the wedding of", "footerNote": "With love, ..." }
+}
+```
+
+## Photos (background slideshow)
+- Put images in `config/photos/`.
+- Supported formats: `.jpg`, `.jpeg`, `.png`, `.webp`, `.avif`.
+- The browser requests the list from `/api/photos`. The client preloads the first image quickly and crossfades.
+- The list auto-refreshes every `slideshow.photoRefreshSeconds` seconds (default 20) to pick up new files.
+
+Tips:
+- Use landscape images ≥ 1920×1080 for best results.
+- Large images are fine; they’re loaded sequentially in the background.
+
+## Generate placeholder images (optional)
+A helper script can create tasteful, branded placeholders using your names/date from `config/config.json`.
+
+```powershell
+npm run gen:photos
+```
+
+Outputs a handful of `generic-XX.png` images into `config/photos/`.
+
+## Docker
+Build a local image and run it. Mount your local `config` directory so you can edit content and photos without rebuilding.
+
+Windows PowerShell:
+
+```powershell
+docker build -t wedding-site:latest .
+docker run --rm -p 5500:5500 -v ${PWD}\config:/app/config wedding-site:latest
+```
+
+macOS/Linux:
+
+```bash
+docker build -t wedding-site:latest .
+docker run --rm -p 5500:5500 -v "$PWD/config:/app/config" wedding-site:latest
+```
+
+Optional: change the port with `-e PORT=8080 -p 8080:8080`.
+
+## Docker Compose (optional)
+Example `docker-compose.yml` if you prefer compose:
+
+```yaml
+services:
+	wedding:
+		image: wedding-site:latest # or build: .
+		ports:
+			- "5500:5500"
+		environment:
+			- PORT=5500
+		volumes:
+			- ./config:/app/config
+		restart: unless-stopped
+```
+
+## CI (GitHub Actions)
+`/.github/workflows/docker.yml` builds a multi-arch image and can push to GHCR (GitHub Container Registry). You can enable Docker Hub pushes by adding a login step and including a docker.io image reference in the metadata step.
+
+## API reference
+- `GET /api/photos` → `{ files: ["file1.jpg", "file2.png", ...] }` from `config/photos/`.
+
+## Troubleshooting
+- Server exits immediately (code 1):
+	- Run `npm install` first to ensure dependencies are present.
+	- Check the terminal error message; ensure `config/config.json` is valid JSON.
+	- Ensure the `config/` and `config/photos/` folders exist and are readable.
+	- Port already in use? Set a different `PORT` or stop the other process.
+- Photos don’t appear:
+	- Verify images are in `config/photos` with supported extensions.
+	- Check `http://localhost:5500/api/photos` returns a list.
+	- Open DevTools → Network to see if image requests 404.
+- Sharp install issues on Windows:
+	- Try `npm install` again; Sharp provides prebuilt binaries for most Node versions.
+	- Ensure Node 18+ and a stable internet connection during install.
+
+## Privacy notes
+Keep private details out of version control. The provided `config/config.json` has placeholders—replace them locally or configure secrets in your deployment environment.
+
+## Favicons
+- All favicon assets live in `/favicon`.
+- The primary source icon is `wedding_bell.svg`. If you want the bell larger, edit that SVG (we scale it around center) and then regenerate the raster variants as needed.
+- This site already references: SVG, ICO, PNG sizes (16–256), Apple Touch (76–180), and `site.webmanifest`.

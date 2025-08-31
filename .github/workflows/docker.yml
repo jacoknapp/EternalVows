@@ -1,0 +1,91 @@
+name: container
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+permissions:
+  contents: read
+  packages: write
+env:
+  IMAGE_NAME: ${{ github.repository }}
+  REGISTRY_GHCR: ghcr.io
+  REGISTRY_DOCKER: docker.io
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Detect supported platforms from Dockerfile base image
+        id: platforms
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Determine the widest set of platforms supported by the base image in Dockerfile
+          BASE_IMAGE=$(awk 'BEGIN{IGNORECASE=1} /^FROM[[:space:]]+/ { print $2; exit }' Dockerfile)
+          : "${BASE_IMAGE:?failed to detect base image from Dockerfile}"
+
+          if ! command -v jq >/dev/null 2>&1; then
+            sudo apt-get update -y
+            sudo apt-get install -y jq > /dev/null
+          fi
+
+          # Use buildx imagetools to fetch the raw manifest and extract linux platforms
+          LIST=$(docker buildx imagetools inspect --raw "$BASE_IMAGE" \
+            | jq -r '[.manifests[]? | select(.platform.os=="linux") | 
+                      (.platform.os + "/" + .platform.architecture + (if (.platform.variant // "") != "" then "/" + .platform.variant else "" end))] 
+                     | unique | .[]' \
+            | sort -u | paste -sd, - || true)
+
+          if [ -z "${LIST}" ]; then
+            LIST="linux/amd64,linux/arm64,linux/arm/v7"
+            echo "Base image platform detection failed; using fallback: $LIST"
+          else
+            echo "Detected platforms from $BASE_IMAGE: $LIST"
+          fi
+
+          echo "list=$LIST" >> "$GITHUB_OUTPUT"
+
+      - name: Login to git
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.REGISTRY }}
+          username: ${{ secrets.USER }}
+          password: ${{ secrets.PASS }}
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ vars.REGISTRY }}/${{ vars.IMAGE_NAME }}
+            ghcr.io/${{ vars.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=sha-,format=short
+            type=ref,event=tag
+            type=ref,event=branch
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Login to external GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.GHCR_USER }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          platforms: ${{ steps.platforms.outputs.list }}
+          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta.outputs.tags }}

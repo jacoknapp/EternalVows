@@ -1,0 +1,25 @@
+{
+  "name": "Wedding Site",
+  "short_name": "Wedding",
+  "icons": [
+    {
+      "src": "wedding_bell_192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "wedding_bell_512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "apple_touch_icon_180x180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "display": "standalone"
+}
