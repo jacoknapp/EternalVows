@@ -8,7 +8,6 @@ Eternal Vows is a customizable, self‑hosted wedding website template for shari
 - Smooth in-page navigation; external links open in a new tab
 - Config-driven content (names, date, venue, schedule, registry, FAQs)
 - Optional “Share Photos” CTA at the top and in the body
-- Lightweight Node + Express server (no build step)
 
 ## Project structure
 - `index.html` — UI, styling, and client JS (loads details from `config/config.json`)
