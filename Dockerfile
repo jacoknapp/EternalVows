@@ -1,6 +1,5 @@
 # Dynamic target: Node + Express serving /config and dynamic /api/photos
-ARG BASE_IMAGE=node:24-alpine
-FROM ${BASE_IMAGE}
+FROM node:lts
 
 WORKDIR /app
 
