@@ -40,6 +40,8 @@ app.use((req, res, next) => {
 
 app.use(express.static(ROOT, { extensions: ['html'], etag: true, lastModified: true }));
 app.use('/config', express.static(CONFIG_DIR, { etag: true, lastModified: true }));
+// Serve photos from config/photos under a stable /photos path used by the client
+app.use('/photos', express.static(PHOTO_DIR, { etag: true, lastModified: true }));
 // Serve favicons and related assets
 app.use('/favicon', express.static(FAVICON_DIR, { etag: true, lastModified: true }));
 app.get('/favicon.ico', (_req, res) => res.sendFile(path.join(FAVICON_DIR, 'wedding_bell_favicon.ico')));
@@ -58,6 +60,11 @@ app.get('/api/photos', async (_req, res) => {
     res.set('Cache-Control', 'no-store');
     res.json({ files });
   } catch (e) {
+    // If the photos directory doesn't exist yet, treat as empty set
+    if (e && (e.code === 'ENOENT' || e.code === 'ENOTDIR')) {
+      warn('Photos directory not found; returning empty list');
+      return res.json({ files: [] });
+    }
     error('Failed to list photos:', e && e.stack ? e.stack : e);
     res.status(500).json({ error: e.message });
   }

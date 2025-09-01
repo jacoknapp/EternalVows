@@ -71,9 +71,19 @@
       box-shadow: 0 20px 60px rgba(0,0,0,.35);
       text-align: center; /* Center names, date, and location */
     }
-  .monogram { display:block; width:max-content; margin-left:0; margin-right:auto; padding:.25rem 1rem; border-radius:999px; border:1px solid rgba(255,255,255,.25);
-      background: radial-gradient(ellipse at top left, var(--accent-1) 0%, transparent 70%), radial-gradient(ellipse at bottom right, var(--accent-2) 0%, transparent 60%);
-      font-family: "Playfair Display", serif; letter-spacing: 1px; opacity:.95; }
+  .monogram {
+      display: inline-block;
+      /* center within the header (parent has text-align:center) */
+      margin: 0 0 .25rem;
+      /* remove pill/button styling */
+      padding: 0;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      font-family: "Playfair Display", serif;
+      letter-spacing: 1px;
+      opacity:.95;
+    }
     h1.names { margin: .35rem 0 .25rem; font-family: "Great Vibes", cursive; font-size: clamp(2.2rem, 8vw, 4.2rem); font-weight: 400; letter-spacing:.4px; text-shadow: 0 2px 18px rgba(0,0,0,.45); }
     .tagline { font-size: clamp(1rem, 2.6vw, 1.2rem); opacity:.96 }
     .date { display:inline-block; margin-top:.4rem; font-weight:600; letter-spacing:.8px; background: linear-gradient(90deg, var(--accent-3), var(--accent-1)); -webkit-background-clip: text; background-clip: text; color: transparent; }

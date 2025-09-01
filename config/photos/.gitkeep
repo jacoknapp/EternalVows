@@ -1,0 +1,2 @@
+# Placeholder to ensure the photos directory exists in the repo.
+# Place .jpg/.jpeg/.png/.webp/.avif files here to be served at /photos/ and listed by /api/photos.
