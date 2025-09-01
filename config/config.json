@@ -20,12 +20,21 @@
   "details": "Reception location details"
     }
   ],
-  "venue": {
-    "name": "Venue Name",
-    "address": "123 Main St, City, ST 00000",
-    "mapUrl": "https://maps.google.com",
-    "mapCta": "Open Map",
-    "notes": "Add venue notes (parking, arrival time, accessibility, etc.)."
+  "venues": {
+    "Ceremony": {
+      "name": "Ceremony Venue Name",
+      "address": "123 Chapel St, City, ST 00000",
+      "mapUrl": "https://maps.google.com/?q=Ceremony+Venue",
+      "mapCta": "Open Map",
+      "notes": "Arrive 15 minutes early. Street parking available."
+    },
+    "Reception": {
+      "name": "Reception Venue Name",
+      "address": "999 Grand Ave, City, ST 00000",
+      "mapUrl": "https://maps.google.com/?q=Reception+Venue",
+      "mapCta": "Open Map",
+      "notes": "Valet available. Dinner served at 6:00 PM."
+    }
   },
   "photoUpload": {
     "label": "Upload to Shared Album",
