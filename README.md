@@ -113,7 +113,7 @@ Example (default with multiple venues):
 
 Alternative formats for venues:
 
-Legacy single venue (still supported):
+Single Venue:
 
 ```json
 "venue": {
@@ -125,7 +125,7 @@ Legacy single venue (still supported):
 }
 ```
 
-Object map (labels from keys):
+Multiple venues
 
 ```json
   "venues": {
