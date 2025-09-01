@@ -84,7 +84,24 @@
       letter-spacing: 1px;
       opacity:.95;
     }
-    h1.names { margin: .35rem 0 .25rem; font-family: "Great Vibes", cursive; font-size: clamp(2.2rem, 8vw, 4.2rem); font-weight: 400; letter-spacing:.4px; text-shadow: 0 2px 18px rgba(0,0,0,.45); }
+    h1.names {
+      margin: .35rem 0 .25rem;
+      font-family: "Great Vibes", cursive;
+      /* Base size; JS will adjust precisely to fit width */
+      font-size: clamp(1.8rem, 8vw, 4.8rem);
+      font-weight: 400;
+      letter-spacing:.4px;
+      text-shadow: 0 2px 18px rgba(0,0,0,.45);
+      /* Force single line */
+      white-space: nowrap;
+      /* Measure intrinsic width accurately and center within the card */
+      display: inline-block;
+      max-width: 100%;
+      /* Avoid unexpected breaks/hyphenation */
+      overflow-wrap: normal;
+      word-break: normal;
+      hyphens: manual;
+    }
     .tagline { font-size: clamp(1rem, 2.6vw, 1.2rem); opacity:.96 }
     .date { display:inline-block; margin-top:.4rem; font-weight:600; letter-spacing:.8px; background: linear-gradient(90deg, var(--accent-3), var(--accent-1)); -webkit-background-clip: text; background-clip: text; color: transparent; }
     .btns { display:flex; flex-wrap:wrap; gap:.7rem; justify-content:center; margin-top:1.1rem; }
@@ -193,7 +210,7 @@
       new Promise(res => setTimeout(res, ms))
     ]);
 
-    async function fetchJSON(url) {
+  async function fetchJSON(url) {
       const r = await fetch(url, { cache: "no-store" });
       if (!r.ok) throw new Error("Failed to load " + url);
       return r.json();
@@ -268,6 +285,52 @@
       container.appendChild(a);
     }
 
+    // Fit text utility: scales an element's font-size to fit its parent's content width on one line
+    function fitTextToParentWidth(el, { minPx = 10, maxPx = 110 } = {}) {
+      if (!el) return;
+      const parent = el.closest('.inner') || el.parentElement || el;
+      const cs = getComputedStyle(parent);
+      const padX = parseFloat(cs.paddingLeft || '0') + parseFloat(cs.paddingRight || '0');
+      // clientWidth includes padding; subtract to get content width available for text
+      const available = Math.max(0, Math.floor(parent.clientWidth - padX));
+      // Reset transform and ensure single line before measuring
+      el.style.whiteSpace = 'nowrap';
+      el.style.transform = '';
+      el.style.transformOrigin = 'center top';
+      el.style.letterSpacing = '';
+      // Binary search for best font size
+      let lo = minPx, hi = maxPx, best = minPx;
+      for (let i = 0; i < 24; i++) {
+        const mid = (lo + hi) / 2;
+        el.style.fontSize = mid + 'px';
+        const w = el.scrollWidth || el.getBoundingClientRect().width;
+        const fits = w <= available;
+        if (fits) { best = mid; lo = mid; } else { hi = mid; }
+        if (hi - lo < 0.5) break;
+      }
+      el.style.fontSize = Math.max(minPx, Math.min(best, maxPx)) + 'px';
+      // No transforms or clipping — the font size itself ensures it fits
+      el.style.transform = '';
+      el.style.letterSpacing = '';
+    }
+
+    function debounce(fn, wait = 120) {
+      let t;
+      return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
+    }
+
+    function fitCoupleNames() {
+      const el = $("names");
+      if (!el) return;
+      // Choose bounds tied to viewport for pleasant scaling
+      const vw = Math.max(320, window.innerWidth || 320);
+      const maxPx = Math.min(120, Math.round(vw * 0.13));
+      const minPx = 14; // allow extra shrink for very long names on small screens
+      fitTextToParentWidth(el, { minPx, maxPx });
+    }
+
+    const fitNamesDebounced = debounce(fitCoupleNames, 120);
+
     function populateFromConfig(cfg) {
   // Theme first, so any content renders with final colors
   try { applyThemeColors(cfg); } catch {}
@@ -277,7 +340,9 @@
         if (siteTitle) document.title = siteTitle;
       } catch {}
       $("monogram").textContent = cfg.ui?.monogram ?? "You’re invited";
-      $("names").textContent = cfg.coupleNames ?? "Our Wedding";
+  $("names").textContent = cfg.coupleNames ?? "Our Wedding";
+  // Ensure the couple names are one line and fit the card
+  fitCoupleNames();
       $("dateDisplay").textContent = cfg.dateDisplay ?? "";
       $("locationShort").textContent = cfg.locationShort ?? "";
       // Show the middle bullet only if both date and location are present
@@ -493,6 +558,18 @@
   // Apply theme asap; then populate content and start slideshow
   applyThemeColors(cfg);
   populateFromConfig(cfg);
+        // After fonts load, refit to account for font metrics
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(() => fitCoupleNames()).catch(() => {});
+        }
+        // Refit on resize
+        window.addEventListener('resize', fitNamesDebounced);
+        // Observe container size changes too (more reliable than window resize alone)
+        const container = document.querySelector('.hero .inner');
+        if (window.ResizeObserver && container) {
+          const ro = new ResizeObserver(() => fitNamesDebounced());
+          ro.observe(container);
+        }
         await startSlideshow(cfg);
         $("loading").classList.add("hide");
         $("content").classList.remove("hide");
