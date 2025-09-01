@@ -322,7 +322,7 @@
   if (hasStory) addBtn(top, "Story", "#story");
   if (hasSchedule) addBtn(top, "Schedule", "#schedule");
   if (hasVenue) addBtn(top, venues.length > 1 ? "Venues" : "Venue", "#venue");
-  if (hasPhotoShare) addBtn(top, "Share Photos", uploadUrl, true);
+  if (hasPhotoShare) addBtn(top, "Share Photos", "#photoshare", true);
   if (hasRegistry) addBtn(top, "Registry", "#registry");
   if (hasFaqs) addBtn(top, "FAQ", "#faqs");
 
@@ -393,6 +393,17 @@
         secPhoto?.classList.add('hide');
       } else {
         secPhoto?.classList.remove('hide');
+        try {
+          const copy = (
+            cfg.photoUpload?.text ||
+            cfg.photoUpload?.description ||
+            cfg.ui?.photoshareText ||
+            cfg.photoshareText ||
+            "We’d love to see the day through your eyes. Add your pics to our shared album!"
+          );
+          const pst = document.getElementById('photoshareText');
+          if (pst && typeof copy === 'string') pst.textContent = copy;
+        } catch {}
         const label = (cfg.photoUpload?.label || cfg.photoUpload?.cta || "Upload to Album");
         const url = uploadUrl;
         addBtn(ps, label, url, true);

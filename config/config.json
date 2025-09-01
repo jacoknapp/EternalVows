@@ -38,7 +38,8 @@
   },
   "photoUpload": {
     "label": "Upload to Shared Album",
-    "url": "https://example.com/your-shared-album"
+    "url": "https://example.com/your-shared-album",
+    "text": "We’d love to see the day through your eyes. Add your pics to our shared album!"
   },
   "registry": [
     {
