@@ -119,10 +119,22 @@ Legacy single venue (still supported):
 Object map (labels from keys):
 
 ```json
-"venues": {
-  "ceremony": { "name": "St. Mary Church", "address": "1 Church Rd", "mapUrl": "https://maps.google.com/?q=church" },
-  "reception": { "name": "The Grand Hall", "address": "999 Party Ave", "mapUrl": "https://maps.google.com/?q=hall" }
-}
+  "venues": {
+    "Ceremony": {
+      "name": "Ceremony Venue Name",
+      "address": "123 Chapel St, City, ST 00000",
+      "mapUrl": "https://maps.google.com/?q=Ceremony+Venue",
+      "mapCta": "Open Map",
+      "notes": "Arrive 15 minutes early. Street parking available."
+    },
+    "Reception": {
+      "name": "Reception Venue Name",
+      "address": "999 Grand Ave, City, ST 00000",
+      "mapUrl": "https://maps.google.com/?q=Reception+Venue",
+      "mapCta": "Open Map",
+      "notes": "Valet available. Dinner served at 6:00 PM."
+    }
+  },
 ```
 
 ## Photos (background slideshow)
