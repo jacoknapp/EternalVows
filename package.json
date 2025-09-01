@@ -4,7 +4,8 @@
     "node": ">=18"
   },
   "scripts": {
-    "gen:favicons": "node scripts/generate_favicons.mjs"
+  "start": "node server.mjs",
+  "gen:favicons": "node scripts/generate_favicons.mjs"
   },
   "dependencies": {
     "express": "^5.1.0"

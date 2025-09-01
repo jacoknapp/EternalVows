@@ -37,14 +37,14 @@ npm install
 2) Start the server
 
 ```powershell
-node .\server.mjs
+npm start
 # then open http://localhost:5500
 ```
 
 Optional: change the port via `PORT` env var (default 5500).
 
 ```powershell
-$env:PORT=8080; node .\server.mjs
+$env:PORT=8080; npm start
 ```
 
 ## Configure content

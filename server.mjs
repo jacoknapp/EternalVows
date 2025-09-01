@@ -10,13 +10,14 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 // Simple structured logger with optional DEBUG
-const LOG_LEVEL = (process.env.LOG_LEVEL || 'info').toLowerCase();
+const LOG_LEVEL = String(process.env.LOG_LEVEL || 'info').toLowerCase();
 const isDebug = LOG_LEVEL === 'debug' || LOG_LEVEL === 'trace' || process.env.DEBUG === '1';
 const ts = () => new Date().toISOString();
-const info = (...args) => console.log(ts(), '[INFO]', ...args);
-const warn = (...args) => console.warn(ts(), '[WARN]', ...args);
-const error = (...args) => console.error(ts(), '[ERROR]', ...args);
-const debug = (...args) => { if (isDebug) console.log(ts(), '[DEBUG]', ...args); };
+const log = (lvl, ...args) => console[lvl === 'error' ? 'error' : lvl === 'warn' ? 'warn' : 'log'](ts(), `[${lvl.toUpperCase()}]`, ...args);
+const info = (...a) => log('info', ...a);
+const warn = (...a) => log('warn', ...a);
+const error = (...a) => log('error', ...a);
+const debug = (...a) => { if (isDebug) log('info', '[DEBUG]', ...a); };
 
 const ROOT = __dirname;
 const CONFIG_DIR = path.join(ROOT, 'config');
@@ -27,13 +28,10 @@ const ALLOWED = new Set(['.jpg','.jpeg','.png','.webp','.avif']);
 // Request/response logger with timing
 app.use((req, res, next) => {
   const start = process.hrtime.bigint();
-  debug('Incoming request', { method: req.method, url: req.originalUrl || req.url, ip: req.ip });
   res.on('finish', () => {
     const durMs = Number(process.hrtime.bigint() - start) / 1e6;
     const msg = `${req.method} ${req.originalUrl || req.url} -> ${res.statusCode} ${Math.round(durMs)}ms`;
-    if (res.statusCode >= 500) error(msg);
-    else if (res.statusCode >= 400) warn(msg);
-    else info(msg);
+    if (res.statusCode >= 500) error(msg); else if (res.statusCode >= 400) warn(msg); else info(msg);
   });
   next();
 });

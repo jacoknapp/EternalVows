@@ -202,379 +202,196 @@
   </div>
 
   <script>
+    // Small DOM and network helpers
     const $ = (id) => document.getElementById(id);
-    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+    const setText = (id, v) => { const el = $(id); if (el) el.textContent = v ?? ""; };
+    const create = (tag, cls) => { const el = document.createElement(tag); if (cls) el.className = cls; return el; };
     const preload = (src) => new Promise(res => { const i = new Image(); i.onload = res; i.onerror = res; i.src = src; });
-    const preloadWithTimeout = (src, ms = 3000) => Promise.race([
-      preload(src),
-      new Promise(res => setTimeout(res, ms))
-    ]);
+    const wait = (ms) => new Promise(r => setTimeout(r, ms));
+    const preloadWithTimeout = (src, ms = 3000) => Promise.race([preload(src), wait(ms)]);
+    const fetchJSON = async (url) => { const r = await fetch(url, { cache: 'no-store' }); if (!r.ok) throw new Error('GET ' + url + ' -> ' + r.status); return r.json(); };
+    const loadConfig = () => fetchJSON('/config/config.json');
 
-  async function fetchJSON(url) {
-      const r = await fetch(url, { cache: "no-store" });
-      if (!r.ok) throw new Error("Failed to load " + url);
-      return r.json();
-    }
-
-  async function loadConfig() { return fetchJSON("/config/config.json"); }
-
-    // Apply optional theme colors from config to CSS variables.
-    // Accepts either cfg.ui.colors or cfg.colors, with keys in camelCase or kebab-case.
+    // Theme colors -> CSS variables
     function applyThemeColors(cfg) {
-      if (!cfg) return;
-      const colors = cfg.ui?.colors || cfg.colors;
-      if (!colors || typeof colors !== 'object') return;
+      const colors = cfg?.ui?.colors || cfg?.colors; if (!colors) return;
       const root = document.documentElement;
-      const get = (...keys) => {
-        for (const k of keys) {
-          const v = colors[k];
-          if (typeof v === 'string' && v.trim()) return v.trim();
-        }
-        return undefined;
-      };
-      const mappings = [
-        ['--accent-1', get('accent1','accent-1')],
-        ['--accent-2', get('accent2','accent-2')],
-        ['--accent-3', get('accent3','accent-3')],
-        ['--text', get('text')],
-        ['--ink', get('ink')],
-        ['--bg-overlay', get('bgOverlay','bg-overlay')],
-        ['--border', get('border')],
-        ['--card', get('card')],
+      const pick = (...k) => { for (const key of k) { const v = colors[key]; if (typeof v === 'string' && v.trim()) return v.trim(); } };
+      const map = [
+        ['--accent-1', pick('accent1','accent-1')],
+        ['--accent-2', pick('accent2','accent-2')],
+        ['--accent-3', pick('accent3','accent-3')],
+        ['--text', pick('text')],
+        ['--ink', pick('ink')],
+        ['--bg-overlay', pick('bgOverlay','bg-overlay')],
+        ['--border', pick('border')],
+        ['--card', pick('card')],
       ];
-      for (const [cssVar, value] of mappings) {
-        if (value) root.style.setProperty(cssVar, value);
-      }
-      // Optional: allow customizing max content width and blur strength
-      const maxw = get('maxw','maxWidth');
-      if (maxw) root.style.setProperty('--maxw', typeof maxw === 'number' ? `${maxw}px` : maxw);
-      const blur = get('blur');
-      if (blur) root.style.setProperty('--blur', blur);
+      for (const [css, val] of map) if (val) root.style.setProperty(css, val);
+      const maxw = pick('maxw','maxWidth'); if (maxw) root.style.setProperty('--maxw', typeof maxw === 'number' ? `${maxw}px` : maxw);
+      const blur = pick('blur'); if (blur) root.style.setProperty('--blur', blur);
     }
 
-    async function fetchPhotoList(cfg) {
-      const url = cfg.slideshow?.dynamicPhotosUrl;
-      if (!url) {
-        console.warn("No dynamicPhotosUrl configured; skipping slideshow.");
-        return [];
-      }
-      try {
-        const data = await fetchJSON(url + (url.includes('?') ? '&' : '?') + '_ts=' + Date.now());
-        const list = (Array.isArray(data) ? data : data.files || []).map(s => s.startsWith('/') ? s : `/photos/${s}`);
-        return Array.from(new Set(list));
-      } catch (e) {
-        console.warn("Failed to fetch photo list:", e);
-        return [];
-      }
-    }
-
+    // Buttons
     function addBtn(container, label, href, primary=false) {
       if (!href) return;
-      const a = document.createElement('a');
-      a.className = 'btn' + (primary ? ' primary' : '');
+      const a = create('a', 'btn' + (primary ? ' primary' : ''));
       a.href = href; a.textContent = label;
-      // Open external links in a new tab; keep in-page anchors in the same tab
-      try {
-        const u = new URL(href, location.href);
-        const isHash = href.startsWith('#');
-        const isExternal = !isHash && u.origin !== location.origin;
-        if (isExternal) { a.target = '_blank'; a.rel = 'noopener'; }
-      } catch {
-        // If URL parsing fails, leave as same-tab default
-      }
+      try { const u = new URL(href, location.href); if (href[0] !== '#' && u.origin !== location.origin) { a.target = '_blank'; a.rel = 'noopener'; } } catch {}
       container.appendChild(a);
     }
 
-    // Fit text utility: scales an element's font-size to fit its parent's content width on one line
-    function fitTextToParentWidth(el, { minPx = 10, maxPx = 110 } = {}) {
-      if (!el) return;
+    // Fit names to single line within the card
+    function fitNames() {
+      const el = $('names'); if (!el) return;
       const parent = el.closest('.inner') || el.parentElement || el;
-      const cs = getComputedStyle(parent);
-      const padX = parseFloat(cs.paddingLeft || '0') + parseFloat(cs.paddingRight || '0');
-      // clientWidth includes padding; subtract to get content width available for text
-      const available = Math.max(0, Math.floor(parent.clientWidth - padX));
-      // Reset transform and ensure single line before measuring
+      const pad = parseFloat(getComputedStyle(parent).paddingLeft || '0') + parseFloat(getComputedStyle(parent).paddingRight || '0');
+      const limit = Math.max(0, Math.floor(parent.clientWidth - pad));
       el.style.whiteSpace = 'nowrap';
-      el.style.transform = '';
-      el.style.transformOrigin = 'center top';
-      el.style.letterSpacing = '';
-      // Binary search for best font size
-      let lo = minPx, hi = maxPx, best = minPx;
-      for (let i = 0; i < 24; i++) {
-        const mid = (lo + hi) / 2;
-        el.style.fontSize = mid + 'px';
-        const w = el.scrollWidth || el.getBoundingClientRect().width;
-        const fits = w <= available;
-        if (fits) { best = mid; lo = mid; } else { hi = mid; }
-        if (hi - lo < 0.5) break;
+      let lo = 12, hi = Math.min(120, Math.round((window.innerWidth || 800) * 0.13)), best = lo;
+      for (let i = 0; i < 18; i++) { const mid = (lo + hi) / 2; el.style.fontSize = mid + 'px'; const w = el.scrollWidth; if (w <= limit) { best = mid; lo = mid; } else { hi = mid; } if (hi - lo < 0.6) break; }
+      el.style.fontSize = Math.max(12, Math.min(best, hi)) + 'px';
+    }
+    const debounce = (fn, ms=120) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+    const fitNamesDebounced = debounce(fitNames, 120);
+
+    // Config normalization and rendering
+    const normalizeVenues = (cfg) => {
+      const out = [];
+      if (Array.isArray(cfg.venues)) return cfg.venues.filter(v => v && (v.name || v.address || v.mapUrl || v.notes));
+      if (cfg.venues && typeof cfg.venues === 'object') {
+        for (const [k,v] of Object.entries(cfg.venues)) if (v && (v.name || v.address || v.mapUrl || v.notes)) out.push({ label: v.label || k, ...v });
       }
-      el.style.fontSize = Math.max(minPx, Math.min(best, maxPx)) + 'px';
-      // No transforms or clipping — the font size itself ensures it fits
-      el.style.transform = '';
-      el.style.letterSpacing = '';
+      if (cfg.venue && (cfg.venue.name || cfg.venue.address || cfg.venue.mapUrl || cfg.venue.notes)) out.push(cfg.venue);
+      return out;
+    };
+    const show = (el, on) => el?.classList.toggle('hide', !on);
+
+    function renderTopButtons(flags, venues) {
+      const top = $('topButtons'); if (!top) return; top.innerHTML='';
+      if (flags.story) addBtn(top, 'Story', '#story');
+      if (flags.schedule) addBtn(top, 'Schedule', '#schedule');
+      if (flags.venue) addBtn(top, venues.length > 1 ? 'Venues' : 'Venue', '#venue');
+      if (flags.photo) addBtn(top, 'Share Photos', '#photoshare', true);
+      if (flags.registry) addBtn(top, 'Registry', '#registry');
+      if (flags.faqs) addBtn(top, 'FAQ', '#faqs');
     }
 
-    function debounce(fn, wait = 120) {
-      let t;
-      return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
+    function renderSchedule(items) {
+      const grid = $('scheduleGrid'); if (!grid) return; grid.innerHTML = '';
+      for (const it of items) {
+        const card = create('div','card');
+        card.innerHTML = `
+          <div class="row">
+            <strong>${it.title ?? ''}</strong>
+            <span class="pill">${it.time ?? ''}</span>
+          </div>
+          <div class="muted" style="margin-top:.4rem;">${it.details ?? ''}</div>
+        `;
+        grid.appendChild(card);
+      }
     }
 
-    function fitCoupleNames() {
-      const el = $("names");
-      if (!el) return;
-      // Choose bounds tied to viewport for pleasant scaling
-      const vw = Math.max(320, window.innerWidth || 320);
-      const maxPx = Math.min(120, Math.round(vw * 0.13));
-      const minPx = 14; // allow extra shrink for very long names on small screens
-      fitTextToParentWidth(el, { minPx, maxPx });
+    function renderVenues(venues) {
+      const grid = $('venueGrid'); if (!grid) return; grid.innerHTML = '';
+      for (const vn of venues) {
+        const card = create('div','card');
+        const labelHtml = vn.label ? `<span class="pill" style="margin-right:.5rem;">${vn.label}</span>` : '';
+        const mapCta = vn.mapCta || 'Open Map';
+        const map = vn.mapUrl ? `<a class="pill" href="${vn.mapUrl}" target="_blank" rel="noopener">${mapCta}</a>` : '';
+        card.innerHTML = `
+          <div class="row">
+            <div>${labelHtml}<strong>${vn.name ?? ''}</strong></div>
+            ${map}
+          </div>
+          <div class="muted" style="margin-top:.4rem;">${vn.address ?? ''}</div>
+          ${vn.notes ? `<div class="muted" style="margin-top:.6rem;">${vn.notes}</div>` : ''}
+        `;
+        grid.appendChild(card);
+      }
+      const title = $('venueTitle'); if (title) title.textContent = venues.length > 1 ? 'Venues' : 'Venue';
     }
 
-    const fitNamesDebounced = debounce(fitCoupleNames, 120);
-
-    function populateFromConfig(cfg) {
-  // Theme first, so any content renders with final colors
-  try { applyThemeColors(cfg); } catch {}
-      // Page title: prefer ui.title or title in config, else coupleNames
-      try {
-        const siteTitle = cfg.ui?.title || cfg.title || cfg.coupleNames || document.title;
-        if (siteTitle) document.title = siteTitle;
-      } catch {}
-      $("monogram").textContent = cfg.ui?.monogram ?? "You’re invited";
-  $("names").textContent = cfg.coupleNames ?? "Our Wedding";
-  // Ensure the couple names are one line and fit the card
-  fitCoupleNames();
-      $("dateDisplay").textContent = cfg.dateDisplay ?? "";
-      $("locationShort").textContent = cfg.locationShort ?? "";
-      // Show the middle bullet only if both date and location are present
-      try {
-        const dd = $("dateDisplay");
-        const ls = $("locationShort");
-        const bullet = dd?.nextElementSibling; // the " • " span
-        const hasBoth = (dd?.textContent?.trim()?.length || 0) && (ls?.textContent?.trim()?.length || 0);
-        if (bullet) bullet.classList.toggle('hide', !hasBoth);
-      } catch {}
-      $("storyText").textContent = cfg.story ?? "";
-
-  // Top nav buttons (conditionally rendered if section exists in config)
-  const top = $("topButtons"); top.innerHTML = "";
-  const hasStory = typeof cfg.story === 'string' && cfg.story.trim().length > 0;
-  const hasSchedule = Array.isArray(cfg.schedule) && cfg.schedule.length > 0;
-  // Normalize venues: support legacy single `venue`, array `venues`, or object map `venues` (e.g., { ceremony: {...}, reception: {...} })
-  const venues = (() => {
-    const arr = [];
-    const v = cfg.venue;
-    const vs = cfg.venues;
-    if (Array.isArray(vs)) {
-      return vs.filter(x => x && (x.name || x.address || x.mapUrl || x.notes));
-    }
-    if (vs && typeof vs === 'object') {
-      for (const [key, val] of Object.entries(vs)) {
-        if (val && (val.name || val.address || val.mapUrl || val.notes)) {
-          arr.push({ label: val.label || key, ...val });
-        }
+    function renderPhotoShare(cfg) {
+      const url = cfg.photoUpload?.url || cfg.photoUploadUrl; const on = !!url;
+      const wrap = $('photoshare'); const btns = $('photoshareBtns'); if (btns) btns.innerHTML='';
+      if (on) {
+        const copy = cfg.photoUpload?.text || cfg.photoUpload?.description || cfg.ui?.photoshareText || cfg.photoshareText;
+        if (copy) setText('photoshareText', String(copy));
+        addBtn(btns, cfg.photoUpload?.label || cfg.photoUpload?.cta || 'Upload to Album', url, true);
       }
-      if (arr.length) return arr;
-    }
-    if (v && (v.name || v.address || v.mapUrl || v.notes)) return [v];
-    return arr;
-  })();
-  const hasVenue = venues.length > 0;
-  const uploadUrl = cfg.photoUpload?.url || cfg.photoUploadUrl;
-  const hasPhotoShare = !!uploadUrl;
-  const hasRegistry = Array.isArray(cfg.registry) && cfg.registry.length > 0;
-  const hasFaqs = Array.isArray(cfg.faqs) && cfg.faqs.length > 0;
-
-  if (hasStory) addBtn(top, "Story", "#story");
-  if (hasSchedule) addBtn(top, "Schedule", "#schedule");
-  if (hasVenue) addBtn(top, venues.length > 1 ? "Venues" : "Venue", "#venue");
-  if (hasPhotoShare) addBtn(top, "Share Photos", "#photoshare", true);
-  if (hasRegistry) addBtn(top, "Registry", "#registry");
-  if (hasFaqs) addBtn(top, "FAQ", "#faqs");
-
-      // story section
-      const secStory = document.getElementById('story');
-      if (!hasStory) {
-        secStory?.classList.add('hide');
-      } else {
-        secStory?.classList.remove('hide');
-      }
-
-      // schedule section
-      const secSchedule = document.getElementById('schedule');
-      const sg = $("scheduleGrid"); sg.innerHTML = "";
-      if (!hasSchedule) {
-        secSchedule?.classList.add('hide');
-      } else {
-        secSchedule?.classList.remove('hide');
-        (cfg.schedule ?? []).forEach(it => {
-          const card = document.createElement("div");
-          card.className = "card";
-          card.innerHTML = `
-            <div class="row">
-              <strong>${it.title ?? ""}</strong>
-              <span class="pill">${it.time ?? ""}</span>
-            </div>
-            <div class="muted" style="margin-top:.4rem;">${it.details ?? ""}</div>
-          `;
-          sg.appendChild(card);
-        });
-      }
-
-      // venue section
-      const secVenue = document.getElementById('venue');
-      const vg = document.getElementById('venueGrid'); if (vg) vg.innerHTML = "";
-      if (!hasVenue) {
-        secVenue?.classList.add('hide');
-      } else {
-        secVenue?.classList.remove('hide');
-        try {
-          const h = document.getElementById('venueTitle');
-          if (h) h.textContent = venues.length > 1 ? 'Venues' : 'Venue';
-        } catch {}
-        venues.forEach((vn) => {
-          const card = document.createElement('div');
-          card.className = 'card';
-          const mapCta = vn.mapCta || 'Open Map';
-          const safeUrl = vn.mapUrl || '#';
-          const labelHtml = vn.label ? `<span class="pill" style="margin-right:.5rem;">${vn.label}</span>` : '';
-          card.innerHTML = `
-            <div class="row">
-              <div>
-                ${labelHtml}<strong>${vn.name ?? ''}</strong>
-              </div>
-              ${safeUrl && safeUrl !== '#' ? `<a class="pill" href="${safeUrl}" target="_blank" rel="noopener">${mapCta}</a>` : ''}
-            </div>
-            <div class="muted" style="margin-top:.4rem;">${vn.address ?? ''}</div>
-            ${vn.notes ? `<div class="muted" style="margin-top:.6rem;">${vn.notes}</div>` : ''}
-          `;
-          vg?.appendChild(card);
-        });
-      }
-
-      // photoshare section
-      const secPhoto = document.getElementById('photoshare');
-      const ps = $("photoshareBtns"); ps.innerHTML = "";
-      if (!hasPhotoShare) {
-        secPhoto?.classList.add('hide');
-      } else {
-        secPhoto?.classList.remove('hide');
-        try {
-          const copy = (
-            cfg.photoUpload?.text ||
-            cfg.photoUpload?.description ||
-            cfg.ui?.photoshareText ||
-            cfg.photoshareText ||
-            "We’d love to see the day through your eyes. Add your pics to our shared album!"
-          );
-          const pst = document.getElementById('photoshareText');
-          if (pst && typeof copy === 'string') pst.textContent = copy;
-        } catch {}
-        const label = (cfg.photoUpload?.label || cfg.photoUpload?.cta || "Upload to Album");
-        const url = uploadUrl;
-        addBtn(ps, label, url, true);
-      }
-
-      // registry section
-      const secReg = document.getElementById('registry');
-      const reg = $("registryBtns"); reg.innerHTML = "";
-      if (!hasRegistry) {
-        secReg?.classList.add('hide');
-      } else {
-        secReg?.classList.remove('hide');
-        (cfg.registry ?? []).forEach(r => addBtn(reg, r.label, r.url));
-      }
-
-      // faqs section
-      const secFaq = document.getElementById('faqs');
-      const faqList = $("faqList"); faqList.innerHTML = "";
-      if (!hasFaqs) {
-        secFaq?.classList.add('hide');
-      } else {
-        secFaq?.classList.remove('hide');
-        (cfg.faqs ?? []).forEach(f => {
-          const card = document.createElement("div");
-          card.className = "card";
-          card.innerHTML = `<strong>${f.q}</strong><div class="muted" style="margin-top:.4rem;">${f.a}</div>`;
-          faqList.appendChild(card);
-        });
-      }
-
-      // footer
-      $("footerNote").textContent = cfg.ui?.footerNote ?? "Made with ♥ for family and friends.";
+      show(wrap, on);
+      return on;
     }
 
+    function renderRegistry(items) {
+      const wrap = $('registry'); const btns = $('registryBtns'); if (btns) btns.innerHTML='';
+      const on = Array.isArray(items) && items.length > 0;
+      if (on) for (const r of items) addBtn(btns, r.label, r.url);
+      show(wrap, on);
+      return on;
+    }
+
+    function renderFaqs(items) {
+      const wrap = $('faqs'); const grid = $('faqList'); if (grid) grid.innerHTML='';
+      const on = Array.isArray(items) && items.length > 0;
+      if (on) for (const f of items) { const card = create('div','card'); card.innerHTML = `<strong>${f.q}</strong><div class="muted" style="margin-top:.4rem;">${f.a}</div>`; grid.appendChild(card); }
+      show(wrap, on);
+      return on;
+    }
+
+    function populate(cfg) {
+      applyThemeColors(cfg);
+      const title = cfg.ui?.title || cfg.title || cfg.coupleNames; if (title) document.title = title;
+      setText('monogram', cfg.ui?.monogram ?? 'You’re invited');
+      setText('names', cfg.coupleNames ?? 'Our Wedding');
+      fitNames();
+      setText('dateDisplay', cfg.dateDisplay ?? '');
+      setText('locationShort', cfg.locationShort ?? '');
+      // toggle bullet between date and location
+      const dd = $('dateDisplay'), ls = $('locationShort'); const bullet = dd?.nextElementSibling; const hasBoth = !!dd?.textContent?.trim() && !!ls?.textContent?.trim(); if (bullet) bullet.classList.toggle('hide', !hasBoth);
+      setText('storyText', cfg.story ?? '');
+
+      const hasStory = !!(cfg.story && String(cfg.story).trim()); show($('story'), hasStory);
+      const hasSchedule = Array.isArray(cfg.schedule) && cfg.schedule.length > 0; if (hasSchedule) renderSchedule(cfg.schedule); show($('schedule'), hasSchedule);
+      const venues = normalizeVenues(cfg); const hasVenue = venues.length > 0; if (hasVenue) renderVenues(venues); show($('venue'), hasVenue);
+      const hasPhoto = renderPhotoShare(cfg);
+      const hasReg = renderRegistry(cfg.registry);
+      const hasFaq = renderFaqs(cfg.faqs);
+      renderTopButtons({ story: hasStory, schedule: hasSchedule, venue: hasVenue, photo: hasPhoto, registry: hasReg, faqs: hasFaq }, venues);
+      setText('footerNote', cfg.ui?.footerNote ?? 'Made with ♥ for family and friends.');
+    }
+
+    // Slideshow
+    async function fetchPhotoList(cfg) {
+      const url = cfg.slideshow?.dynamicPhotosUrl; if (!url) return [];
+      try { const data = await fetchJSON(url + (url.includes('?') ? '&' : '?') + '_ts=' + Date.now()); const list = (Array.isArray(data) ? data : data.files || []).map(s => s.startsWith('/') ? s : `/photos/${s}`); return [...new Set(list)]; } catch { return []; }
+    }
     async function startSlideshow(cfg) {
-      const bg = $("bg");
-      const intervalMs = cfg.slideshow?.intervalMs ?? 6000;
-      const transitionMs = cfg.slideshow?.transitionMs ?? 1200;
-      let photos = await fetchPhotoList(cfg);
-      if (!photos.length) {
-        // Keep the gradient fallback background; nothing else to do.
-        return;
-      }
-
-      const slides = [document.createElement("div"), document.createElement("div")];
-      slides.forEach(s => { s.className = "bg-slide"; s.style.transitionDuration = transitionMs + "ms"; bg.appendChild(s); });
-
-  let idx = 0, cur = 0;
-  // Show the first image as soon as it's ready, but don't block too long
-  await preloadWithTimeout(photos[0], cfg.slideshow?.firstImageTimeoutMs ?? 3000);
-  slides[cur].style.backgroundImage = `url('${photos[idx]}')`;
-  slides[cur].classList.add("active");
-  document.body.classList.add('slideshow-on');
-  // Opportunistically preload the next image
-  preload(photos[1 % photos.length]);
-
-      setInterval(() => {
-        idx = (idx + 1) % photos.length;
-        const next = 1 - cur;
-        preload(photos[idx]);
-        slides[next].style.backgroundImage = `url('${photos[idx]}')`;
-        slides[next].classList.add("active");
-        slides[cur].classList.remove("active");
-        cur = next;
-      }, intervalMs);
-
-      // Auto-refresh list
-  const refreshSec = cfg.slideshow?.photoRefreshSeconds ?? 20;
-      (async function refreshLoop() {
-        while (true) {
-          await new Promise(r => setTimeout(r, refreshSec * 1000));
-          try {
-            const fresh = await fetchPhotoList(cfg);
-            const existing = new Set(photos);
-            const freshSet = new Set(fresh);
-            const newlyAdded = fresh.filter(p => !existing.has(p));
-            if (newlyAdded.length) { photos = photos.concat(newlyAdded); }
-            photos = photos.filter(p => freshSet.has(p));
-          } catch (e) { console.warn("Photo refresh failed:", e); }
-        }
-      })();
+      const bg = $('bg'); const intervalMs = cfg.slideshow?.intervalMs ?? 6000; const transitionMs = cfg.slideshow?.transitionMs ?? 1200;
+      let photos = await fetchPhotoList(cfg); if (!photos.length) return; // keep gradient fallback
+      const slides = [create('div','bg-slide'), create('div','bg-slide')]; slides.forEach(s => { s.style.transitionDuration = transitionMs + 'ms'; bg.appendChild(s); });
+      let idx = 0, cur = 0;
+      await preloadWithTimeout(photos[0], cfg.slideshow?.firstImageTimeoutMs ?? 3000);
+      slides[cur].style.backgroundImage = `url('${photos[idx]}')`; slides[cur].classList.add('active'); document.body.classList.add('slideshow-on');
+      preload(photos[1 % photos.length]);
+      setInterval(() => { idx = (idx + 1) % photos.length; const next = 1 - cur; preload(photos[idx]); slides[next].style.backgroundImage = `url('${photos[idx]}')`; slides[next].classList.add('active'); slides[cur].classList.remove('active'); cur = next; }, intervalMs);
+      const refreshSec = cfg.slideshow?.photoRefreshSeconds ?? 20;
+      (async function refreshLoop(){ while (true) { await wait(refreshSec * 1000); try { const fresh = await fetchPhotoList(cfg); const setFresh = new Set(fresh); const newly = fresh.filter(p => !new Set(photos).has(p)); if (newly.length) photos = photos.concat(newly); photos = photos.filter(p => setFresh.has(p)); } catch {} } })();
     }
 
+    // App init
     (async function init(){
       try {
         const cfg = await loadConfig();
-  // Apply theme asap; then populate content and start slideshow
-  applyThemeColors(cfg);
-  populateFromConfig(cfg);
-        // After fonts load, refit to account for font metrics
-        if (document.fonts && document.fonts.ready) {
-          document.fonts.ready.then(() => fitCoupleNames()).catch(() => {});
-        }
-        // Refit on resize
-        window.addEventListener('resize', fitNamesDebounced);
-        // Observe container size changes too (more reliable than window resize alone)
-        const container = document.querySelector('.hero .inner');
-        if (window.ResizeObserver && container) {
-          const ro = new ResizeObserver(() => fitNamesDebounced());
-          ro.observe(container);
-        }
+        populate(cfg);
+        if (document.fonts?.ready) document.fonts.ready.then(() => fitNames()).catch(() => {});
+        addEventListener('resize', fitNamesDebounced);
+        const inner = document.querySelector('.hero .inner'); if (window.ResizeObserver && inner) new ResizeObserver(() => fitNamesDebounced()).observe(inner);
         await startSlideshow(cfg);
-        $("loading").classList.add("hide");
-        $("content").classList.remove("hide");
+        $('loading')?.classList.add('hide'); $('content')?.classList.remove('hide');
       } catch (e) {
-        $("loading").textContent = "Could not load site details (config.json).";
+        setText('loading', 'Could not load site details (config.json).');
         console.error(e);
       }
     })();
