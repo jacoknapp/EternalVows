@@ -14,7 +14,6 @@ Eternal Vows is a customizable, self‑hosted wedding website template for shari
 - `server.mjs` — Express server and `/api/photos` endpoint
 - `config/config.json` — Site content (names, date, venue, etc.)
 - `config/photos/` — Background slideshow images
-- `scripts/generate_placeholders.mjs` — Generates branded placeholder images using Sharp
 - `.github/workflows/docker.yml` — Optional CI to build/push a container image
 
 ## Quick start (Node)
@@ -128,14 +127,14 @@ Build a local image and run it. Mount your local `config` directory so you can e
 Windows PowerShell:
 
 ```powershell
-docker build -t wedding-site:latest .
+docker build -t ghcr.io/jacoknapp/eternalvows:latest .
 docker run --rm -p 5500:5500 -v ${PWD}\config:/app/config wedding-site:latest
 ```
 
 macOS/Linux:
 
 ```bash
-docker build -t wedding-site:latest .
+docker build -t ghcr.io/jacoknapp/eternalvows:latest .
 docker run --rm -p 5500:5500 -v "$PWD/config:/app/config" wedding-site:latest
 ```
 
