@@ -147,7 +147,7 @@ Example `docker-compose.yml` if you prefer compose:
 ```yaml
 services:
   wedding:
-    image: wedding-site:latest # or build: .
+    image: ghcr.io/jacoknapp/eternalvows:latest # or build: .
     ports:
       - "5500:5500"
     environment:
