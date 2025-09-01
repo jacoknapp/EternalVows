@@ -1,9 +1,5 @@
-# Dynamic target: Node + Express serving /config and dynamic /api/photos
-# Use a multi-arch base that includes linux/arm64. Alpine variants occasionally
-# miss a platform in the manifest. bookworm-slim is reliably multi-arch.
-ARG BASE_IMAGE=node:24-bookworm-slim
-ARG TARGETPLATFORM
-FROM --platform=$TARGETPLATFORM ${BASE_IMAGE}
+FROM node:lts
+
 
 WORKDIR /app
 
