@@ -418,16 +418,20 @@
       try {
         const cfg = await loadConfig();
         populate(cfg);
-  // Ensure the display font is available before showing names to avoid visible resize
-  await waitForFontFamily('Great Vibes', 2500);
-  fitNames();
-  revealNamesFallback();
-        addEventListener('resize', fitNamesDebounced);
-        const inner = document.querySelector('.hero .inner'); if (window.ResizeObserver && inner) new ResizeObserver(() => fitNamesDebounced()).observe(inner);
-  // Extra fallback if something blocks the above
-  setTimeout(revealNamesFallback, 5000);
-        await startSlideshow(cfg);
-        $('loading')?.classList.add('hide'); $('content')?.classList.remove('hide');
+      // Ensure the display font is available before sizing
+      await waitForFontFamily('Great Vibes', 2500);
+      // Make content measurable before sizing names (names remain hidden)
+      $('content')?.classList.remove('hide');
+      // Now size names and reveal
+      fitNames();
+      revealNamesFallback();
+      // Hooks for future resizes
+      addEventListener('resize', fitNamesDebounced);
+      const inner = document.querySelector('.hero .inner'); if (window.ResizeObserver && inner) new ResizeObserver(() => fitNamesDebounced()).observe(inner);
+      // Start slideshow without blocking UI
+      startSlideshow(cfg);
+      // Hide loading indicator
+      $('loading')?.classList.add('hide');
       } catch (e) {
         setText('loading', 'Could not load site details (config.json).');
         console.error(e);
