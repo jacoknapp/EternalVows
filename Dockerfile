@@ -1,5 +1,5 @@
-# Dynamic target: Node + Express serving /config and dynamic /api/photos
 FROM node:lts
+
 
 WORKDIR /app
 

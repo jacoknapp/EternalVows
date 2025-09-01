@@ -17,8 +17,6 @@ const ALLOWED = new Set(['.jpg','.jpeg','.png','.webp','.avif']);
 
 app.use(express.static(ROOT, { extensions: ['html'], etag: true, lastModified: true }));
 app.use('/config', express.static(CONFIG_DIR, { etag: true, lastModified: true }));
-// Serve photos from config/photos first, then fall back to legacy /photos
-app.use('/photos', express.static(PHOTO_DIR, { etag: true, lastModified: true }));
 // Serve favicons and related assets
 app.use('/favicon', express.static(FAVICON_DIR, { etag: true, lastModified: true }));
 app.get('/favicon.ico', (_req, res) => res.sendFile(path.join(FAVICON_DIR, 'wedding_bell_favicon.ico')));
