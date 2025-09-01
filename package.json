@@ -1,7 +1,6 @@
 {
   "type": "module",
   "scripts": {
-  "gen:photos": "node scripts/generate_placeholders.mjs",
   "gen:favicons": "node scripts/generate_favicons.mjs"
   },
   "dependencies": {

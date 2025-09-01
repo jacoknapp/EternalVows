@@ -146,25 +146,14 @@
     <section id="schedule">
       <div class="container">
         <h2>Schedule</h2>
-        <div id="scheduleGrid" class="grid two"></div>
+        <div id="scheduleGrid" class="grid"></div>
       </div>
     </section>
 
     <section id="venue">
       <div class="container">
-        <h2>Venue</h2>
-        <div class="grid two">
-          <div class="card">
-            <div class="row">
-              <strong id="venueName">Venue Name</strong>
-              <a id="venueMap" class="pill" target="_blank" rel="noopener">Open Map</a>
-            </div>
-            <div id="venueAddress" class="muted" style="margin-top:.4rem;"></div>
-          </div>
-          <div class="card">
-            <p class="muted" id="venueNotes"></p>
-          </div>
-        </div>
+  <h2 id="venueTitle">Venue</h2>
+  <div id="venueGrid" class="grid"></div>
       </div>
     </section>
 
@@ -305,14 +294,34 @@
   const top = $("topButtons"); top.innerHTML = "";
   const hasStory = typeof cfg.story === 'string' && cfg.story.trim().length > 0;
   const hasSchedule = Array.isArray(cfg.schedule) && cfg.schedule.length > 0;
-  const hasVenue = !!(cfg.venue && (cfg.venue.name || cfg.venue.address || cfg.venue.notes || cfg.venue.mapUrl));
+  // Normalize venues: support legacy single `venue`, array `venues`, or object map `venues` (e.g., { ceremony: {...}, reception: {...} })
+  const venues = (() => {
+    const arr = [];
+    const v = cfg.venue;
+    const vs = cfg.venues;
+    if (Array.isArray(vs)) {
+      return vs.filter(x => x && (x.name || x.address || x.mapUrl || x.notes));
+    }
+    if (vs && typeof vs === 'object') {
+      for (const [key, val] of Object.entries(vs)) {
+        if (val && (val.name || val.address || val.mapUrl || val.notes)) {
+          arr.push({ label: val.label || key, ...val });
+        }
+      }
+      if (arr.length) return arr;
+    }
+    if (v && (v.name || v.address || v.mapUrl || v.notes)) return [v];
+    return arr;
+  })();
+  const hasVenue = venues.length > 0;
   const uploadUrl = cfg.photoUpload?.url || cfg.photoUploadUrl;
   const hasPhotoShare = !!uploadUrl;
   const hasRegistry = Array.isArray(cfg.registry) && cfg.registry.length > 0;
   const hasFaqs = Array.isArray(cfg.faqs) && cfg.faqs.length > 0;
 
+  if (hasStory) addBtn(top, "Story", "#story");
   if (hasSchedule) addBtn(top, "Schedule", "#schedule");
-  if (hasVenue) addBtn(top, "Venue", "#venue");
+  if (hasVenue) addBtn(top, venues.length > 1 ? "Venues" : "Venue", "#venue");
   if (hasPhotoShare) addBtn(top, "Share Photos", uploadUrl, true);
   if (hasRegistry) addBtn(top, "Registry", "#registry");
   if (hasFaqs) addBtn(top, "FAQ", "#faqs");
@@ -348,16 +357,33 @@
 
       // venue section
       const secVenue = document.getElementById('venue');
+      const vg = document.getElementById('venueGrid'); if (vg) vg.innerHTML = "";
       if (!hasVenue) {
         secVenue?.classList.add('hide');
       } else {
         secVenue?.classList.remove('hide');
-        $("venueName").textContent = cfg.venue?.name ?? "";
-        $("venueAddress").textContent = cfg.venue?.address ?? "";
-        const vm = $("venueMap");
-        vm.href = cfg.venue?.mapUrl || "#";
-        vm.textContent = cfg.venue?.mapCta ?? "Open Map";
-        $("venueNotes").textContent = cfg.venue?.notes ?? "";
+        try {
+          const h = document.getElementById('venueTitle');
+          if (h) h.textContent = venues.length > 1 ? 'Venues' : 'Venue';
+        } catch {}
+        venues.forEach((vn) => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          const mapCta = vn.mapCta || 'Open Map';
+          const safeUrl = vn.mapUrl || '#';
+          const labelHtml = vn.label ? `<span class="pill" style="margin-right:.5rem;">${vn.label}</span>` : '';
+          card.innerHTML = `
+            <div class="row">
+              <div>
+                ${labelHtml}<strong>${vn.name ?? ''}</strong>
+              </div>
+              ${safeUrl && safeUrl !== '#' ? `<a class="pill" href="${safeUrl}" target="_blank" rel="noopener">${mapCta}</a>` : ''}
+            </div>
+            <div class="muted" style="margin-top:.4rem;">${vn.address ?? ''}</div>
+            ${vn.notes ? `<div class="muted" style="margin-top:.6rem;">${vn.notes}</div>` : ''}
+          `;
+          vg?.appendChild(card);
+        });
       }
 
       // photoshare section

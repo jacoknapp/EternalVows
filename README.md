@@ -46,7 +46,10 @@ Edit `config/config.json`. All fields are optional; unset sections/buttons are h
 - `locationShort`: Short city/state line under the date
 - `story`: Paragraph for “Our Story”
 - `schedule`: Array of items `{ time, title, details }`
-- `venue`: `{ name, address, mapUrl, mapCta, notes }`
+- `venue`: `{ name, address, mapUrl, mapCta, notes }` (legacy single-venue)
+- `venues`: Multiple venues, either as an array `[{...}, {...}]` or a labeled object map:
+  - Array form: each item supports `{ name, address, mapUrl, mapCta, notes, label? }`
+  - Object form: keys become labels, values are venue objects, e.g. `{ ceremony: {...}, reception: {...} }`
 - `photoUpload`: `{ url, label? }` link to your shared album
 - `registry`: Array of `{ label, url }`
 - `faqs`: Array of `{ q, a }`
@@ -69,12 +72,23 @@ Example:
     { "time": "4:00 PM", "title": "Cocktail Hour", "details": "Cocktail hour location details" },
     { "time": "5:30 PM", "title": "Reception", "details": "Reception location details" }
   ],
+  // EITHER legacy single venue:
   "venue": {
     "name": "Venue Name",
     "address": "123 Main St, City, ST 00000",
     "mapUrl": "https://maps.google.com",
     "mapCta": "Open Map",
     "notes": "Parking and arrival notes."
+  },
+  // OR multiple venues (array):
+  "venues": [
+    { "label": "Ceremony", "name": "St. Mary Church", "address": "1 Church Rd", "mapUrl": "https://maps.google.com/?q=...", "notes": "Street parking available." },
+    { "label": "Reception", "name": "The Grand Hall", "address": "999 Party Ave", "mapUrl": "https://maps.google.com/?q=...", "notes": "Valet on site." }
+  ],
+  // OR multiple venues (object map):
+  "venues": {
+    "ceremony": { "name": "St. Mary Church", "address": "1 Church Rd", "mapUrl": "https://maps.google.com/?q=..." },
+    "reception": { "name": "The Grand Hall", "address": "999 Party Ave", "mapUrl": "https://maps.google.com/?q=..." }
   },
   "photoUpload": { "label": "Upload to Shared Album", "url": "https://example.com/album" },
   "registry": [
@@ -111,15 +125,6 @@ Example:
 Tips:
 - Use landscape images ≥ 1920×1080 for best results.
 - Large images are fine; they’re loaded sequentially in the background.
-
-## Generate placeholder images (optional)
-A helper script can create tasteful, branded placeholders using your names/date from `config/config.json`.
-
-```powershell
-npm run gen:photos
-```
-
-Outputs a handful of `generic-XX.png` images into `config/photos/`.
 
 ## Docker
 Build a local image and run it. Mount your local `config` directory so you can edit content and photos without rebuilding.
