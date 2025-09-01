@@ -53,6 +53,17 @@ jobs:
                      | unique | .[]' \
             | sort -u | paste -sd, - || true)
 
+          # Filter out platforms known to be slow or flaky for Node+npm under QEMU
+          if [ -n "${LIST}" ]; then
+            FILTERED=$(echo "$LIST" | tr ',' '\n' | grep -Ev 'linux/(s390x|ppc64le|riscv64)' | paste -sd, - || true)
+            if [ -n "${FILTERED}" ]; then
+              LIST="$FILTERED"
+            else
+              echo "All detected platforms were filtered; will use fallback."
+              LIST=""
+            fi
+          fi
+
           if [ -z "${LIST}" ]; then
             LIST="linux/amd64,linux/arm64,linux/arm/v7"
             echo "Base image platform detection failed; using fallback: $LIST"

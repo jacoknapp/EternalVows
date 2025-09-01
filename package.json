@@ -1,11 +1,17 @@
 {
   "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
+  "start": "node server.mjs",
   "gen:favicons": "node scripts/generate_favicons.mjs"
   },
   "dependencies": {
-    "express": "^5.1.0",
-  "sharp": "^0.33.4",
-  "png-to-ico": "^2.1.8"
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "png-to-ico": "^2.1.8",
+    "sharp": "^0.33.4"
   }
 }
