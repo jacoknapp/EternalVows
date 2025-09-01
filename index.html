@@ -36,6 +36,11 @@
       --border: rgba(255,255,255,0.12);
       --blur: saturate(140%) blur(6px);
       --maxw: 1024px;
+  /* Fluid button sizing */
+  --btn-fs: clamp(0.9rem, 0.88rem + 0.25vw, 1rem);
+  --btn-pad-y: clamp(0.55em, 0.46em + 0.22vw, 0.75em);
+  --btn-pad-x: clamp(0.85em, 0.78em + 0.38vw, 1.15em);
+  --btn-gap: clamp(0.4rem, 0.35rem + 0.4vw, 0.8rem);
     }
     * { box-sizing: border-box }
   html, body { margin:0; height:100%; background:#101010; color:var(--text); line-height:1.65; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif; }
@@ -101,12 +106,26 @@
       overflow-wrap: normal;
       word-break: normal;
       hyphens: manual;
+      /* Prevent initial overflow flash before JS sizing */
+      opacity: 0; transition: opacity .18s ease;
     }
+    .names.is-ready { opacity: 1; }
     .tagline { font-size: clamp(1rem, 2.6vw, 1.2rem); opacity:.96 }
-    .date { display:inline-block; margin-top:.4rem; font-weight:600; letter-spacing:.8px; background: linear-gradient(90deg, var(--accent-3), var(--accent-1)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-    .btns { display:flex; flex-wrap:wrap; gap:.7rem; justify-content:center; margin-top:1.1rem; }
+  .date { display:inline-block; margin-top:.2rem; font-weight:600; letter-spacing:.8px; background: linear-gradient(90deg, var(--accent-3), var(--accent-1)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .btns { display:flex; flex-wrap:wrap; gap: var(--btn-gap); justify-content:center; margin-top:1.1rem; }
     .btn { appearance:none; border:1px solid rgba(255,255,255,.28); color:#fff; background: transparent;
-      padding:.75rem 1.1rem; border-radius:999px; cursor:pointer; text-decoration:none; font-weight:600; transition: transform .12s ease, background .2s ease, border-color .2s ease; backdrop-filter: var(--blur); }
+      font-size: var(--btn-fs); line-height: 1.2;
+      padding: var(--btn-pad-y) var(--btn-pad-x);
+      border-radius:999px; cursor:pointer; text-decoration:none; font-weight:600; transition: transform .12s ease, background .2s ease, border-color .2s ease; backdrop-filter: var(--blur); text-align:center; }
+    @media (max-width: 380px) {
+      :root{
+        --btn-fs: clamp(0.85rem, 0.82rem + 0.3vw, 0.98rem);
+        --btn-pad-y: clamp(0.5em, 0.45em + 0.2vw, 0.75em);
+        --btn-pad-x: clamp(0.75em, 0.7em + 0.4vw, 1.1em);
+        --btn-gap: 0.35rem;
+      }
+      .btns { margin-top: .9rem; }
+    }
     .btn.primary { background: transparent; color:#fff; border-color: rgba(255,255,255,.28); }
     .btn:hover { transform: translateY(-1px); border-color: rgba(255,255,255,.6); background: rgba(255,255,255,.06); }
     section { position:relative; padding: 3rem 1.2rem; }
@@ -212,6 +231,19 @@
     const fetchJSON = async (url) => { const r = await fetch(url, { cache: 'no-store' }); if (!r.ok) throw new Error('GET ' + url + ' -> ' + r.status); return r.json(); };
     const loadConfig = () => fetchJSON('/config/config.json');
 
+    // Wait for a specific font family to be available (best-effort)
+    async function waitForFontFamily(family, timeoutMs = 2500) {
+      try {
+        if (!document.fonts || !document.fonts.load) return;
+        const sample = `400 48px "${family}"`;
+        if (document.fonts.check(sample)) return;
+        await Promise.race([
+          document.fonts.load(sample, 'A'),
+          wait(timeoutMs)
+        ]);
+      } catch {}
+    }
+
     // Theme colors -> CSS variables
     function applyThemeColors(cfg) {
       const colors = cfg?.ui?.colors || cfg?.colors; if (!colors) return;
@@ -250,10 +282,12 @@
       el.style.whiteSpace = 'nowrap';
       let lo = 12, hi = Math.min(120, Math.round((window.innerWidth || 800) * 0.13)), best = lo;
       for (let i = 0; i < 18; i++) { const mid = (lo + hi) / 2; el.style.fontSize = mid + 'px'; const w = el.scrollWidth; if (w <= limit) { best = mid; lo = mid; } else { hi = mid; } if (hi - lo < 0.6) break; }
-      el.style.fontSize = Math.max(12, Math.min(best, hi)) + 'px';
+  el.style.fontSize = Math.max(12, Math.min(best, hi)) + 'px';
     }
     const debounce = (fn, ms=120) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
     const fitNamesDebounced = debounce(fitNames, 120);
+  // Reveal helper
+  const revealNamesFallback = () => { const el = $('names'); if (el && !el.classList.contains('is-ready')) el.classList.add('is-ready'); };
 
     // Config normalization and rendering
     const normalizeVenues = (cfg) => {
@@ -345,7 +379,6 @@
       const title = cfg.ui?.title || cfg.title || cfg.coupleNames; if (title) document.title = title;
       setText('monogram', cfg.ui?.monogram ?? 'You’re invited');
       setText('names', cfg.coupleNames ?? 'Our Wedding');
-      fitNames();
       setText('dateDisplay', cfg.dateDisplay ?? '');
       setText('locationShort', cfg.locationShort ?? '');
       // toggle bullet between date and location
@@ -385,9 +418,14 @@
       try {
         const cfg = await loadConfig();
         populate(cfg);
-        if (document.fonts?.ready) document.fonts.ready.then(() => fitNames()).catch(() => {});
+  // Ensure the display font is available before showing names to avoid visible resize
+  await waitForFontFamily('Great Vibes', 2500);
+  fitNames();
+  revealNamesFallback();
         addEventListener('resize', fitNamesDebounced);
         const inner = document.querySelector('.hero .inner'); if (window.ResizeObserver && inner) new ResizeObserver(() => fitNamesDebounced()).observe(inner);
+  // Extra fallback if something blocks the above
+  setTimeout(revealNamesFallback, 5000);
         await startSlideshow(cfg);
         $('loading')?.classList.add('hide'); $('content')?.classList.remove('hide');
       } catch (e) {
