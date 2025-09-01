@@ -6,13 +6,13 @@ Eternal Vows is a customizable, self‑hosted wedding website template for shari
 - Clean, modern single-page design with elegant typography
 - Dynamic background slideshow sourced from `config/photos` (no rebuild required)
 - Smooth in-page navigation; external links open in a new tab
-- Config-driven content (names, date, venue, schedule, registry, FAQs)
+- Config-driven content (names, date, venues, schedule, registry, FAQs)
 - Optional “Share Photos” CTA at the top and in the body
 
 ## Project structure
 - `index.html` — UI, styling, and client JS (loads details from `config/config.json`)
 - `server.mjs` — Express server and `/api/photos` endpoint
-- `config/config.json` — Site content (names, date, venue, etc.)
+- `config/config.json` — Site content (names, date, venue(s), etc.)
 - `config/photos/` — Background slideshow images
 - `.github/workflows/docker.yml` — Optional CI to build/push a container image
 
@@ -46,10 +46,10 @@ Edit `config/config.json`. All fields are optional; unset sections/buttons are h
 - `locationShort`: Short city/state line under the date
 - `story`: Paragraph for “Our Story”
 - `schedule`: Array of items `{ time, title, details }`
-- `venue`: `{ name, address, mapUrl, mapCta, notes }` (legacy single-venue)
-- `venues`: Multiple venues, either as an array `[{...}, {...}]` or a labeled object map:
-  - Array form: each item supports `{ name, address, mapUrl, mapCta, notes, label? }`
-  - Object form: keys become labels, values are venue objects, e.g. `{ ceremony: {...}, reception: {...} }`
+- `venues`: Multiple venues (preferred). Use an array `[{...}, {...}]` or a labeled object map.
+  - Array form (recommended): each item supports `{ name, address, mapUrl, mapCta, notes, label? }`
+  - Object form: keys become labels; values are venue objects, e.g. `{ ceremony: {...}, reception: {...} }`
+- `venue`: Legacy single-venue (optional): `{ name, address, mapUrl, mapCta, notes }`
 - `photoUpload`: `{ url, label? }` link to your shared album
 - `registry`: Array of `{ label, url }`
 - `faqs`: Array of `{ q, a }`
@@ -59,7 +59,7 @@ Edit `config/config.json`. All fields are optional; unset sections/buttons are h
     - Supported keys: `accent1`, `accent2`, `accent3`, `text`, `ink`, `bgOverlay`, `border`, `card`, `maxw`, `blur`.
     - Values are CSS colors or raw CSS for `blur` (e.g., `saturate(140%) blur(6px)`) and unit values for `maxw` (e.g., `1024px`).
 
-Example:
+Example (default with multiple venues):
 
 ```json
 {
@@ -72,24 +72,10 @@ Example:
     { "time": "4:00 PM", "title": "Cocktail Hour", "details": "Cocktail hour location details" },
     { "time": "5:30 PM", "title": "Reception", "details": "Reception location details" }
   ],
-  // EITHER legacy single venue:
-  "venue": {
-    "name": "Venue Name",
-    "address": "123 Main St, City, ST 00000",
-    "mapUrl": "https://maps.google.com",
-    "mapCta": "Open Map",
-    "notes": "Parking and arrival notes."
-  },
-  // OR multiple venues (array):
   "venues": [
-    { "label": "Ceremony", "name": "St. Mary Church", "address": "1 Church Rd", "mapUrl": "https://maps.google.com/?q=...", "notes": "Street parking available." },
-    { "label": "Reception", "name": "The Grand Hall", "address": "999 Party Ave", "mapUrl": "https://maps.google.com/?q=...", "notes": "Valet on site." }
+    { "label": "Ceremony", "name": "St. Mary Church", "address": "1 Church Rd", "mapUrl": "https://maps.google.com/?q=church", "notes": "Street parking available." },
+    { "label": "Reception", "name": "The Grand Hall", "address": "999 Party Ave", "mapUrl": "https://maps.google.com/?q=hall", "notes": "Valet on site." }
   ],
-  // OR multiple venues (object map):
-  "venues": {
-    "ceremony": { "name": "St. Mary Church", "address": "1 Church Rd", "mapUrl": "https://maps.google.com/?q=..." },
-    "reception": { "name": "The Grand Hall", "address": "999 Party Ave", "mapUrl": "https://maps.google.com/?q=..." }
-  },
   "photoUpload": { "label": "Upload to Shared Album", "url": "https://example.com/album" },
   "registry": [
     { "label": "Amazon", "url": "https://example.com/amazon" },
@@ -113,6 +99,29 @@ Example:
       "blur": "saturate(140%) blur(6px)"
     }
   }
+}
+```
+
+Alternative formats for venues:
+
+Legacy single venue (still supported):
+
+```json
+"venue": {
+  "name": "Venue Name",
+  "address": "123 Main St, City, ST 00000",
+  "mapUrl": "https://maps.google.com",
+  "mapCta": "Open Map",
+  "notes": "Parking and arrival notes."
+}
+```
+
+Object map (labels from keys):
+
+```json
+"venues": {
+  "ceremony": { "name": "St. Mary Church", "address": "1 Church Rd", "mapUrl": "https://maps.google.com/?q=church" },
+  "reception": { "name": "The Grand Hall", "address": "999 Party Ave", "mapUrl": "https://maps.google.com/?q=hall" }
 }
 ```
 
