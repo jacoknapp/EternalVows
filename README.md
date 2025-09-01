@@ -50,7 +50,7 @@ Edit `config/config.json`. All fields are optional; unset sections/buttons are h
   - Array form (recommended): each item supports `{ name, address, mapUrl, mapCta, notes, label? }`
   - Object form: keys become labels; values are venue objects, e.g. `{ ceremony: {...}, reception: {...} }`
 - `venue`: Legacy single-venue (optional): `{ name, address, mapUrl, mapCta, notes }`
-- `photoUpload`: `{ url, label? }` link to your shared album
+- `photoUpload`: `{ url, label?, text? }` link to your shared album; `text` customizes the paragraph in the section (fallbacks to defaults if omitted)
 - `registry`: Array of `{ label, url }`
 - `faqs`: Array of `{ q, a }`
 - `slideshow`: `{ intervalMs, transitionMs, photoRefreshSeconds, dynamicPhotosUrl }` (defaults work out of the box)
