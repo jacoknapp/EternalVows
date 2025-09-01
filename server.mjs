@@ -2,7 +2,7 @@
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readdir } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import { extname } from 'node:path';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -38,6 +38,82 @@ app.use((req, res, next) => {
   next();
 });
 
+// Serve dynamic index with title/meta injected from config for better previews (no-JS crawlers)
+async function getConfig() {
+  try {
+    const raw = await readFile(path.join(CONFIG_DIR, 'config.json'), 'utf8');
+    return JSON.parse(raw);
+  } catch (e) {
+    warn('Failed to read config.json; using defaults. Error:', e && e.message);
+    return {};
+  }
+}
+
+function buildMeta(cfg) {
+  const title = cfg.ui?.title || cfg.title || cfg.coupleNames || 'Wedding';
+  // Build a friendly description
+  const date = cfg.dateDisplay ? String(cfg.dateDisplay) : '';
+  const loc = cfg.locationShort ? String(cfg.locationShort) : '';
+  const parts = [
+    cfg.story && String(cfg.story).trim().slice(0, 140),
+    [date, loc].filter(Boolean).join(' • ')
+  ].filter(Boolean);
+  const description = parts[0] || 'Join us for our wedding celebration.';
+  return { title, description };
+}
+
+function injectHead(html, { title, description }) {
+  let out = html;
+  // Replace <title>
+  out = out.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
+  // Replace meta description if present; else insert after title
+  if (/<meta[^>]+name=["']description["'][^>]*>/i.test(out)) {
+    out = out.replace(/<meta[^>]+name=["']description["'][^>]*>/i, `<meta name="description" content="${escapeHtml(description)}">`);
+  } else {
+    out = out.replace(/<title>[\s\S]*?<\/title>/i, m => `${m}\n  <meta name="description" content="${escapeHtml(description)}">`);
+  }
+  // Ensure OG/Twitter meta tags
+  const ogTitle = `<meta property="og:title" content="${escapeHtml(title)}">`;
+  const ogDesc = `<meta property="og:description" content="${escapeHtml(description)}">`;
+  const twTitle = `<meta name="twitter:title" content="${escapeHtml(title)}">`;
+  const twDesc = `<meta name="twitter:description" content="${escapeHtml(description)}">`;
+  const ensure = (pattern, tag) => {
+    if (!pattern.test(out)) {
+      out = out.replace(/<head[^>]*>/i, m => `${m}\n  ${tag}`);
+    }
+  };
+  ensure(/<meta[^>]+property=["']og:title["'][^>]*>/i, ogTitle);
+  ensure(/<meta[^>]+property=["']og:description["'][^>]*>/i, ogDesc);
+  ensure(/<meta[^>]+name=["']twitter:title["'][^>]*>/i, twTitle);
+  ensure(/<meta[^>]+name=["']twitter:description["'][^>]*>/i, twDesc);
+  return out;
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+app.get(['/', '/index.html'], async (_req, res) => {
+  try {
+    const [cfg, html] = await Promise.all([
+      getConfig(),
+      readFile(path.join(ROOT, 'index.html'), 'utf8')
+    ]);
+    const meta = buildMeta(cfg || {});
+    const out = injectHead(html, meta);
+    res.set('Cache-Control', 'no-store');
+    res.type('html').send(out);
+  } catch (e) {
+    error('Failed to render index.html dynamically, falling back to static. Error:', e && e.stack ? e.stack : e);
+    res.sendFile(path.join(ROOT, 'index.html'));
+  }
+});
+
+// Static assets and routes
 app.use(express.static(ROOT, { extensions: ['html'], etag: true, lastModified: true }));
 app.use('/config', express.static(CONFIG_DIR, { etag: true, lastModified: true }));
 // Serve photos from config/photos under a stable /photos path used by the client
