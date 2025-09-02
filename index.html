@@ -3,6 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#131a25" />
+  <meta name="theme-color" content="#131a25" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <title>Wedding of Partner A &amp; Partner B</title>
   <meta name="description" content="Join us for our wedding celebration!" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -43,7 +46,7 @@
   --btn-gap: clamp(0.4rem, 0.35rem + 0.4vw, 0.8rem);
     }
     * { box-sizing: border-box }
-  html, body { margin:0; height:100%; background:#101010; color:var(--text); line-height:1.65; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif; }
+  html, body { margin:0; height:100%; background:#131a25; color:var(--text); line-height:1.65; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif; }
   html { scroll-behavior: smooth; }
     body::before, body::after {
       content:""; position: fixed; width: 260px; height: 260px; z-index: 1; pointer-events:none; opacity:.55; mix-blend-mode: screen; filter: drop-shadow(0 10px 20px rgba(0,0,0,.25));
@@ -58,6 +61,10 @@
         radial-gradient(900px circle at 15% 85%, rgba(247,237,220,0.35), transparent 50%),
         linear-gradient(180deg, #1b2230, #131a25);
     }
+    /* iOS: ensure background covers when toolbar collapses */
+    @supports (height: 100lvh) {
+      .ios .bg { top: 0; left: 0; right: 0; bottom: 0; height: calc(100lvh + env(safe-area-inset-bottom)); }
+    }
   #content { position: relative; z-index: 2; }
     .bg-slide { position:absolute; inset:0; background-position:center; background-size:cover; opacity:0; transition: opacity 1.2s ease-in-out; will-change: opacity; }
     .bg-slide.active { opacity: 1; }
@@ -71,6 +78,10 @@
     /* On iOS Safari use large viewport height so the hero remains full-bleed even when the URL bar collapses */
     @supports (height: 100lvh) {
       .ios header.hero { min-height: 100lvh; }
+    }
+    /* Fill the bottom safe area to avoid a black bar on iOS */
+    @supports (bottom: env(safe-area-inset-bottom)) {
+      .ios .bg { bottom: calc(-1 * env(safe-area-inset-bottom)); }
     }
     .hero .inner {
       position:relative; z-index:2; width:min(92vw, 840px);
