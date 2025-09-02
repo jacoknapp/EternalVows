@@ -91,6 +91,12 @@
       "card": "rgba(255,255,255,0.08)",
       "maxw": "1024px",
       "blur": "saturate(140%) blur(6px)"
+    },
+    "background": {
+      "baseTop": "#2d2616",
+      "baseBottom": "#1f1a10",
+      "radial1": "rgba(234, 200, 94, 0.45)",
+      "radial2": "rgba(255, 239, 189, 0.38)"
     }
   }
 }
