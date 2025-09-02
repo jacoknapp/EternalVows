@@ -250,6 +250,19 @@
     const preload = (src) => new Promise(res => { const i = new Image(); i.onload = res; i.onerror = res; i.src = src; });
     const wait = (ms) => new Promise(r => setTimeout(r, ms));
     const preloadWithTimeout = (src, ms = 3000) => Promise.race([preload(src), wait(ms)]);
+    // Strict image loader: resolves only when the image finishes loading, rejects on error/timeout
+    const loadImage = (src, timeoutMs = 15000) => new Promise((resolve, reject) => {
+      try {
+        const img = new Image();
+        let done = false;
+        const cleanup = () => { img.onload = null; img.onerror = null; if (t) clearTimeout(t); };
+        const ok = () => { if (done) return; done = true; cleanup(); resolve(src); };
+        const fail = (err) => { if (done) return; done = true; cleanup(); reject(err || new Error('Image failed: ' + src)); };
+        const t = timeoutMs ? setTimeout(() => fail(new Error('timeout')), timeoutMs) : null;
+        img.onload = ok; img.onerror = () => fail();
+        img.src = src;
+      } catch (e) { reject(e); }
+    });
     const fetchJSON = async (url) => { const r = await fetch(url, { cache: 'no-store' }); if (!r.ok) throw new Error('GET ' + url + ' -> ' + r.status); return r.json(); };
     const loadConfig = () => fetchJSON('/config/config.json');
 
@@ -433,16 +446,71 @@
       try { const data = await fetchJSON(url + (url.includes('?') ? '&' : '?') + '_ts=' + Date.now()); const list = (Array.isArray(data) ? data : data.files || []).map(s => s.startsWith('/') ? s : `/photos/${s}`); return [...new Set(list)]; } catch { return []; }
     }
     async function startSlideshow(cfg) {
-      const bg = $('bg'); const intervalMs = cfg.slideshow?.intervalMs ?? 6000; const transitionMs = cfg.slideshow?.transitionMs ?? 1200;
-      let photos = await fetchPhotoList(cfg); if (!photos.length) return; // keep gradient fallback
-      const slides = [create('div','bg-slide'), create('div','bg-slide')]; slides.forEach(s => { s.style.transitionDuration = transitionMs + 'ms'; bg.appendChild(s); });
-      let idx = 0, cur = 0;
-      await preloadWithTimeout(photos[0], cfg.slideshow?.firstImageTimeoutMs ?? 3000);
-      slides[cur].style.backgroundImage = `url('${photos[idx]}')`; slides[cur].classList.add('active'); document.body.classList.add('slideshow-on');
-      preload(photos[1 % photos.length]);
-      setInterval(() => { idx = (idx + 1) % photos.length; const next = 1 - cur; preload(photos[idx]); slides[next].style.backgroundImage = `url('${photos[idx]}')`; slides[next].classList.add('active'); slides[cur].classList.remove('active'); cur = next; }, intervalMs);
+      const bg = $('bg');
+      const intervalMs = cfg.slideshow?.intervalMs ?? 6000;
+      const transitionMs = cfg.slideshow?.transitionMs ?? 1200;
+      const loadTimeoutMs = cfg.slideshow?.imageLoadTimeoutMs ?? 15000;
+      const firstTimeoutMs = cfg.slideshow?.firstImageTimeoutMs ?? loadTimeoutMs;
+
+      let photos = await fetchPhotoList(cfg);
+      if (!photos.length) return; // keep gradient fallback
+
+      const slides = [create('div','bg-slide'), create('div','bg-slide')];
+      slides.forEach(s => { s.style.transitionDuration = transitionMs + 'ms'; bg.appendChild(s); });
+
+      let idx = 0, cur = 0, currentSrc = photos[0];
+
+      // Keep the gradient until the first photo is fully loaded
+      try { await loadImage(currentSrc, firstTimeoutMs); } catch { return; }
+      slides[cur].style.backgroundImage = `url('${currentSrc}')`;
+      slides[cur].classList.add('active');
+      document.body.classList.add('slideshow-on');
+
+      // Slide loop: wait for next image to load before transitioning
+      (async function slideLoop(){
+        while (true) {
+          if (!photos.length) { await wait(intervalMs); continue; }
+          let nextIdx = (idx + 1) % photos.length;
+          let nextSrc = photos[nextIdx];
+
+          try {
+            await loadImage(nextSrc, loadTimeoutMs);
+          } catch {
+            // Skip/remove bad image to avoid blocking; if only one remains, wait and retry later
+            if (photos.length > 1) { photos.splice(nextIdx, 1); continue; }
+            await wait(intervalMs); continue;
+          }
+
+          const next = 1 - cur;
+          slides[next].style.backgroundImage = `url('${nextSrc}')`;
+          slides[next].classList.add('active');
+          slides[cur].classList.remove('active');
+          cur = next; idx = nextIdx; currentSrc = nextSrc;
+
+          await wait(intervalMs);
+        }
+      })();
+
+      // Periodically refresh the photo list without interrupting the current slide
       const refreshSec = cfg.slideshow?.photoRefreshSeconds ?? 20;
-      (async function refreshLoop(){ while (true) { await wait(refreshSec * 1000); try { const fresh = await fetchPhotoList(cfg); const setFresh = new Set(fresh); const newly = fresh.filter(p => !new Set(photos).has(p)); if (newly.length) photos = photos.concat(newly); photos = photos.filter(p => setFresh.has(p)); } catch {} } })();
+      (async function refreshLoop(){
+        while (true) {
+          await wait(refreshSec * 1000);
+          try {
+            const fresh = await fetchPhotoList(cfg);
+            if (!Array.isArray(fresh) || fresh.length === 0) continue;
+            // Keep the current photo if it still exists; otherwise reset to start
+            if (fresh.includes(currentSrc)) {
+              photos = fresh.slice();
+              idx = photos.indexOf(currentSrc);
+            } else {
+              photos = fresh.slice();
+              idx = 0;
+              currentSrc = photos[0];
+            }
+          } catch {}
+        }
+      })();
     }
 
     // App init
