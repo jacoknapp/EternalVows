@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Wedding of Partner A &amp; Partner B</title>
   <meta name="description" content="Join us for our wedding celebration!" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -67,6 +67,10 @@
     /* Prefer dynamic viewport units when available for accurate fold behavior */
     @supports (height: 100dvh) {
       header.hero { min-height: 100dvh; }
+    }
+    /* On iOS Safari use large viewport height so the hero remains full-bleed even when the URL bar collapses */
+    @supports (height: 100lvh) {
+      .ios header.hero { min-height: 100lvh; }
     }
     .hero .inner {
       position:relative; z-index:2; width:min(92vw, 840px);
@@ -151,8 +155,17 @@
     .loading { text-align:center; padding:2rem; opacity:.9; }
     .hide { display:none !important; }
   </style>
-</head>
-<body>
+ </head>
+ <body>
+  <script>
+    (function(){
+      try {
+        var ua = navigator.userAgent || navigator.platform || "";
+        var isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        if (isIOS) document.documentElement.classList.add('ios');
+      } catch {}
+    })();
+  </script>
   <div class="bg" id="bg"></div>
   <div id="loading" class="loading">Loading details…</div>
 
