@@ -55,11 +55,12 @@
     body::before { top: 0; left: 0; transform: translate(-10%,-10%) rotate(0deg); }
     body::after  { bottom: 0; right: 0; transform: translate(10%,10%) rotate(180deg); }
   .bg { position: fixed; inset: 0; overflow:hidden; z-index:0;
-      /* Lighter gradient fallback so the page isn't black before photos load */
+      /* Configurable golden gradient fallback using CSS variables */
       background:
-        radial-gradient(1200px circle at 75% 10%, rgba(163,188,214,0.40), transparent 55%),
-        radial-gradient(900px circle at 15% 85%, rgba(247,237,220,0.35), transparent 50%),
-        linear-gradient(180deg, #1b2230, #131a25);
+        radial-gradient(1200px circle at 75% 10%, var(--bg-r1, rgba(234, 200, 94, 0.45)), transparent 55%),
+        radial-gradient(900px circle at 15% 85%, var(--bg-r2, rgba(255, 239, 189, 0.38)), transparent 50%),
+        /* Deep warm base to keep good contrast with white text */
+        linear-gradient(180deg, var(--bg-base-top, #2d2616), var(--bg-base-bottom, #1f1a10));
     }
     /* iOS: ensure background covers when toolbar collapses */
     @supports (height: 100lvh) {
@@ -267,22 +268,32 @@
 
     // Theme colors -> CSS variables
     function applyThemeColors(cfg) {
-      const colors = cfg?.ui?.colors || cfg?.colors; if (!colors) return;
       const root = document.documentElement;
-      const pick = (...k) => { for (const key of k) { const v = colors[key]; if (typeof v === 'string' && v.trim()) return v.trim(); } };
-      const map = [
-        ['--accent-1', pick('accent1','accent-1')],
-        ['--accent-2', pick('accent2','accent-2')],
-        ['--accent-3', pick('accent3','accent-3')],
-        ['--text', pick('text')],
-        ['--ink', pick('ink')],
-        ['--bg-overlay', pick('bgOverlay','bg-overlay')],
-        ['--border', pick('border')],
-        ['--card', pick('card')],
-      ];
-      for (const [css, val] of map) if (val) root.style.setProperty(css, val);
-      const maxw = pick('maxw','maxWidth'); if (maxw) root.style.setProperty('--maxw', typeof maxw === 'number' ? `${maxw}px` : maxw);
-      const blur = pick('blur'); if (blur) root.style.setProperty('--blur', blur);
+      const colors = cfg?.ui?.colors || cfg?.colors || {};
+      const pickFrom = (obj, ...keys) => {
+        for (const k of keys) { const v = obj?.[k]; if (typeof v === 'string' && v.trim()) return v.trim(); }
+      };
+      const setVar = (name, value) => { if (typeof value === 'string' && value.trim()) root.style.setProperty(name, value.trim()); };
+      // Existing color variables
+      setVar('--accent-1', pickFrom(colors, 'accent1','accent-1'));
+      setVar('--accent-2', pickFrom(colors, 'accent2','accent-2'));
+      setVar('--accent-3', pickFrom(colors, 'accent3','accent-3'));
+      setVar('--text',      pickFrom(colors, 'text'));
+      setVar('--ink',       pickFrom(colors, 'ink'));
+      setVar('--bg-overlay',pickFrom(colors, 'bgOverlay','bg-overlay'));
+      setVar('--border',    pickFrom(colors, 'border'));
+      setVar('--card',      pickFrom(colors, 'card'));
+      const maxw = pickFrom(colors, 'maxw','maxWidth'); if (maxw) root.style.setProperty('--maxw', typeof maxw === 'number' ? `${maxw}px` : maxw);
+      const blur = pickFrom(colors, 'blur'); if (blur) root.style.setProperty('--blur', blur);
+
+      // Background customization from colors or ui.background/background
+      // Accept both flat keys in colors and nested object with keys: baseTop, baseBottom, radial1, radial2
+      const bgCfg = (cfg?.ui?.background || cfg?.background || {});
+      const bgColors = { ...colors, ...bgCfg };
+      setVar('--bg-base-top',    pickFrom(bgColors, 'bgBaseTop','bg-base-top','baseTop','top'));
+      setVar('--bg-base-bottom', pickFrom(bgColors, 'bgBaseBottom','bg-base-bottom','baseBottom','bottom'));
+      setVar('--bg-r1',          pickFrom(bgColors, 'bgRadial1','bg-r1','radial1','r1'));
+      setVar('--bg-r2',          pickFrom(bgColors, 'bgRadial2','bg-r2','radial2','r2'));
     }
 
     // Buttons
