@@ -67,6 +67,10 @@ Edit `config/config.json`. All fields are optional; unset sections/buttons are h
   - Optional color palette: `ui.colors` or top-level `colors`.
     - Supported keys: `accent1`, `accent2`, `accent3`, `text`, `ink`, `bgOverlay`, `border`, `card`, `maxw`, `blur`.
     - Values are CSS colors or raw CSS for `blur` (e.g., `saturate(140%) blur(6px)`) and unit values for `maxw` (e.g., `1024px`).
+  - Background (fallback when photos aren’t visible): `ui.background` or top-level `background`.
+    - Keys: `baseTop`, `baseBottom`, `radial1`, `radial2` (CSS colors).
+    - Alternate keys also accepted in `ui.colors` for convenience: `bgBaseTop`, `bgBaseBottom`, `bgRadial1`, `bgRadial2` (or kebab-case `bg-base-top`, etc.).
+    - Defaults to a warm golden palette if not provided.
 
 Example (default with multiple venues):
 
@@ -106,6 +110,12 @@ Example (default with multiple venues):
       "card": "rgba(255,255,255,0.08)",
       "maxw": "1024px",
       "blur": "saturate(140%) blur(6px)"
+    },
+    "background": {
+      "baseTop": "#2d2616",
+      "baseBottom": "#1f1a10",
+      "radial1": "rgba(234, 200, 94, 0.45)",
+      "radial2": "rgba(255, 239, 189, 0.38)"
     }
   }
 }
