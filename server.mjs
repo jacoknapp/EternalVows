@@ -3,6 +3,7 @@ import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readdir, readFile } from 'node:fs/promises';
+import YAML from 'yaml';
 import { extname } from 'node:path';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -36,15 +37,32 @@ app.use((req, res, next) => {
   next();
 });
 
+// Load site config with JSON preferred, YAML fallback
+async function loadConfigPreferringJson() {
+  // 1) Try JSON if present and parseable
+  try {
+    const rawJson = await readFile(path.join(CONFIG_DIR, 'config.json'), 'utf8');
+    try { return JSON.parse(rawJson); } catch (e) { warn('config.json parse error, trying YAML:', e && e.message); }
+  } catch (e) {
+    // JSON not found or unreadable; try YAML
+  }
+  // 2) Try YAML (config.yaml or config.yml)
+  for (const name of ['config.yaml', 'config.yml']) {
+    try {
+      const rawYaml = await readFile(path.join(CONFIG_DIR, name), 'utf8');
+      try { return YAML.parse(rawYaml) || {}; } catch (e) { warn(`${name} parse error:`, e && e.message); }
+    } catch (e) {
+      // Not found; continue
+    }
+  }
+  // 3) Nothing found
+  warn('No config.json or config.yaml found; using defaults');
+  return {};
+}
+
 // Serve dynamic index with title/meta injected from config for better previews (no-JS crawlers)
 async function getConfig() {
-  try {
-    const raw = await readFile(path.join(CONFIG_DIR, 'config.json'), 'utf8');
-    return JSON.parse(raw);
-  } catch (e) {
-    warn('Failed to read config.json; using defaults. Error:', e && e.message);
-    return {};
-  }
+  return loadConfigPreferringJson();
 }
 
 function buildMeta(cfg) {
@@ -108,6 +126,18 @@ app.get(['/', '/index.html'], async (_req, res) => {
   } catch (e) {
     error('Failed to render index.html dynamically, falling back to static. Error:', e && e.stack ? e.stack : e);
     res.sendFile(path.join(ROOT, 'index.html'));
+  }
+});
+
+// Config endpoint: always emits JSON. Prefers config.json; falls back to config.yaml/yml.
+app.get('/config/config.json', async (_req, res) => {
+  try {
+    const cfg = await loadConfigPreferringJson();
+    res.set('Cache-Control', 'no-store');
+    res.json(cfg);
+  } catch (e) {
+    error('Failed to build config response:', e && e.stack ? e.stack : e);
+    res.status(500).json({ error: 'Failed to load config' });
   }
 });
 

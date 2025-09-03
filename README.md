@@ -1,6 +1,6 @@
 # Eternal Vows -- Wedding Website
 
-Eternal Vows is a customizable, self‑hosted wedding website template for sharing all of your event information in one place. Configure names, date, location, story, schedule, venue details (with map), registry links, FAQs, and optional photo‑sharing links via a simple JSON file—no rebuild required. A lightweight Node + Express server powers a dynamic background slideshow that auto‑refreshes as you add images. Run locally with Node or deploy easily with Docker/Compose.
+Eternal Vows is a customizable, self‑hosted wedding website template for sharing all of your event information in one place. Configure names, date, location, story, schedule, venue details (with map), registry links, FAQs, and optional photo‑sharing links via a simple YAML file—no rebuild required. JSON is also supported. A lightweight Node + Express server powers a dynamic background slideshow that auto‑refreshes as you add images. Run locally with Node or deploy easily with Docker/Compose.
 
 ## Features
 - Clean, modern single-page design with elegant typography
@@ -19,9 +19,9 @@ Below are screenshots of the default layout to help visualize the sections and s
 ![Bottom of page](img/BottomOfPage.png)
 
 ## Project structure
-- `index.html` — UI, styling, and client JS (loads details from `config/config.json`)
+- `index.html` — UI, styling, and client JS (loads details from `config/config.yaml`)
 - `server.mjs` — Express server and `/api/photos` endpoint
-- `config/config.json` — Site content (names, date, venue(s), etc.)
+- `config/config.yaml` — Site content (names, date, venue(s), etc.)
 - `config/photos/` — Background slideshow images
 - `.github/workflows/docker.yml` — Optional CI to build/push a container image
 
@@ -48,7 +48,10 @@ $env:PORT=8080; npm start
 ```
 
 ## Configure content
-Edit `config/config.json`. All fields are optional; unset sections/buttons are hidden automatically.
+Edit `config/config.yaml`. All fields are optional; unset sections/buttons are hidden automatically.
+
+Notes:
+- JSON is also supported at `config/config.json`. If both YAML and JSON exist, JSON takes precedence.
 
 - `coupleNames`: Display names for the hero section
 - `dateDisplay`: Friendly wedding date string
@@ -61,6 +64,10 @@ Edit `config/config.json`. All fields are optional; unset sections/buttons are h
 - `venue`: Legacy single-venue (optional): `{ name, address, mapUrl, mapCta, notes }`
 - `photoUpload`: `{ url, label?, text? }` link to your shared album; `text` customizes the paragraph in the section (fallbacks to defaults if omitted)
 - `registry`: Array of `{ label, url }`
+- `rsvp`: Configure the RSVP section and button(s). Supports:
+  - Object form: `{ url, label?, text?, buttons?: [{ label, url }, ...] }` — first button is primary; `text` customizes the paragraph.
+  - Array form: `[ { label, url }, { label, url } ]` — multiple buttons.
+  - Legacy flat keys (still supported): `rsvpUrl`, `rsvpLabel`, and optional `rsvpText`.
 - `faqs`: Array of `{ q, a }`
 - `slideshow`: `{ intervalMs, transitionMs, photoRefreshSeconds, dynamicPhotosUrl }` (defaults work out of the box)
 - `ui`: `{ monogram, footerNote, autoRefreshSeconds }`
@@ -74,86 +81,135 @@ Edit `config/config.json`. All fields are optional; unset sections/buttons are h
 
 Example (default with multiple venues):
 
-```json
-{
-  "coupleNames": "Partner One & Partner Two",
-  "dateDisplay": "Month 00, 20XX",
-  "locationShort": "City, ST",
-  "story": "Share a short story about how you met...",
-  "schedule": [
-    { "time": "3:00 PM", "title": "Ceremony", "details": "Ceremony location details" },
-    { "time": "4:00 PM", "title": "Cocktail Hour", "details": "Cocktail hour location details" },
-    { "time": "5:30 PM", "title": "Reception", "details": "Reception location details" }
-  ],
-  "venues": [
-    { "label": "Ceremony", "name": "St. Mary Church", "address": "1 Church Rd", "mapUrl": "https://maps.google.com/?q=church", "notes": "Street parking available." },
-    { "label": "Reception", "name": "The Grand Hall", "address": "999 Party Ave", "mapUrl": "https://maps.google.com/?q=hall", "notes": "Valet on site." }
-  ],
-  "photoUpload": { "label": "Upload to Shared Album", "url": "https://example.com/album" },
-  "registry": [
-    { "label": "Amazon", "url": "https://example.com/amazon" },
-    { "label": "Target", "url": "https://example.com/target" }
-  ],
-  "faqs": [ { "q": "Dress code?", "a": "Semi-formal." } ],
-  "slideshow": { "dynamicPhotosUrl": "/api/photos", "intervalMs": 6000, "transitionMs": 1200 },
-  "ui": {
-    "monogram": "You’re invited to the wedding of",
-    "footerNote": "With love, ...",
-    "colors": {
-      "accent1": "#a3bcd6",
-      "accent2": "#d7e5f3",
-      "accent3": "#f7eddc",
-      "text": "#ffffff",
-      "ink": "#2b2a2a",
-      "bgOverlay": "rgba(20,18,18,0.35)",
-      "border": "rgba(255,255,255,0.12)",
-      "card": "rgba(255,255,255,0.08)",
-      "maxw": "1024px",
-      "blur": "saturate(140%) blur(6px)"
-    },
-    "background": {
-      "baseTop": "#2d2616",
-      "baseBottom": "#1f1a10",
-      "radial1": "rgba(234, 200, 94, 0.45)",
-      "radial2": "rgba(255, 239, 189, 0.38)"
-    }
-  }
-}
+```yaml
+coupleNames: "Partner One & Partner Two"
+dateDisplay: "Month 00, 20XX"
+locationShort: "City, ST"
+story: "Share a short story about how you met..."
+schedule:
+  - time: "3:00 PM"
+    title: "Ceremony"
+    details: "Ceremony location details"
+  - time: "4:00 PM"
+    title: "Cocktail Hour"
+    details: "Cocktail hour location details"
+  - time: "5:30 PM"
+    title: "Reception"
+    details: "Reception location details"
+venues:
+  - label: "Ceremony"
+    name: "St. Mary Church"
+    address: "1 Church Rd"
+    mapUrl: "https://maps.google.com/?q=church"
+    notes: "Street parking available."
+  - label: "Reception"
+    name: "The Grand Hall"
+    address: "999 Party Ave"
+    mapUrl: "https://maps.google.com/?q=hall"
+    notes: "Valet on site."
+photoUpload:
+  label: "Upload to Shared Album"
+  url: "https://example.com/album"
+rsvp:
+  label: "RSVP Now"
+  url: "https://example.com/rsvp"
+  text: "Kindly respond by Sept 1st."
+registry:
+  - label: "Amazon"
+    url: "https://example.com/amazon"
+  - label: "Target"
+    url: "https://example.com/target"
+faqs:
+  - q: "Dress code?"
+    a: "Semi-formal."
+slideshow:
+  dynamicPhotosUrl: "/api/photos"
+  intervalMs: 6000
+  transitionMs: 1200
+ui:
+  monogram: "You’re invited to the wedding of"
+  footerNote: "With love, ..."
+  colors:
+    accent1: "#a3bcd6"
+    accent2: "#d7e5f3"
+    accent3: "#f7eddc"
+    text: "#ffffff"
+    ink: "#2b2a2a"
+    bgOverlay: "rgba(20,18,18,0.35)"
+    border: "rgba(255,255,255,0.12)"
+    card: "rgba(255,255,255,0.08)"
+    maxw: "1024px"
+    blur: "saturate(140%) blur(6px)"
+  background:
+    baseTop: "#2d2616"
+    baseBottom: "#1f1a10"
+    radial1: "rgba(234, 200, 94, 0.45)"
+    radial2: "rgba(255, 239, 189, 0.38)"
+```
+
+RSVP variations:
+
+Single object with extra buttons and custom text:
+
+```yaml
+rsvp:
+  text: "Please let us know if you can join us."
+  url: "https://example.com/rsvp"
+  label: "RSVP Now"
+  buttons:
+    - label: "RSVP (English)"
+      url: "https://example.com/rsvp-en"
+    - label: "RSVP (Español)"
+      url: "https://example.com/rsvp-es"
+```
+
+Array form (multiple buttons, no extra text):
+
+```yaml
+rsvp:
+  - label: "RSVP Now"
+    url: "https://example.com/rsvp"
+  - label: "Add to Calendar"
+    url: "https://example.com/calendar.ics"
+```
+
+Legacy flat keys (still work):
+
+```yaml
+rsvpUrl: "https://example.com/rsvp"
+rsvpLabel: "RSVP Now"
+rsvpText: "Kindly respond by Sept 1st."
 ```
 
 Alternative formats for venues:
 
 Legacy single venue (still supported):
 
-```json
-"venue": {
-  "name": "Venue Name",
-  "address": "123 Main St, City, ST 00000",
-  "mapUrl": "https://maps.google.com",
-  "mapCta": "Open Map",
-  "notes": "Parking and arrival notes."
-}
+```yaml
+venue:
+  name: "Venue Name"
+  address: "123 Main St, City, ST 00000"
+  mapUrl: "https://maps.google.com"
+  mapCta: "Open Map"
+  notes: "Parking and arrival notes."
 ```
 
 Object map (labels from keys):
 
-```json
-  "venues": {
-    "Ceremony": {
-      "name": "Ceremony Venue Name",
-      "address": "123 Chapel St, City, ST 00000",
-      "mapUrl": "https://maps.google.com/?q=Ceremony+Venue",
-      "mapCta": "Open Map",
-      "notes": "Arrive 15 minutes early. Street parking available."
-    },
-    "Reception": {
-      "name": "Reception Venue Name",
-      "address": "999 Grand Ave, City, ST 00000",
-      "mapUrl": "https://maps.google.com/?q=Reception+Venue",
-      "mapCta": "Open Map",
-      "notes": "Valet available. Dinner served at 6:00 PM."
-    }
-  },
+```yaml
+venues:
+  Ceremony:
+    name: "Ceremony Venue Name"
+    address: "123 Chapel St, City, ST 00000"
+    mapUrl: "https://maps.google.com/?q=Ceremony+Venue"
+    mapCta: "Open Map"
+    notes: "Arrive 15 minutes early. Street parking available."
+  Reception:
+    name: "Reception Venue Name"
+    address: "999 Grand Ave, City, ST 00000"
+    mapUrl: "https://maps.google.com/?q=Reception+Venue"
+    mapCta: "Open Map"
+    notes: "Valet available. Dinner served at 6:00 PM."
 ```
 
 ## Photos (background slideshow)
@@ -210,7 +266,7 @@ services:
 ## Troubleshooting
 - Server exits immediately (code 1):
   - Run `npm install` first to ensure dependencies are present.
-  - Check the terminal error message; ensure `config/config.json` is valid JSON.
+  - Check the terminal error message; ensure `config/config.yaml` is valid YAML (or JSON if using JSON).
   - Ensure the `config/` and `config/photos/` folders exist and are readable.
   - Port already in use? Set a different `PORT` or stop the other process.
 - Photos don’t appear:
@@ -222,7 +278,7 @@ services:
   - Ensure Node 18+ and a stable internet connection during install.
 
 ## Privacy notes
-Keep private details out of version control. The provided `config/config.json` has placeholders—replace them locally or configure secrets in your deployment environment.
+Keep private details out of version control. The provided `config/config.yaml` has placeholders—replace them locally or configure secrets in your deployment environment. JSON is also supported if preferred.
 
 ## Favicons
 - All favicon assets live in `/favicon`.
