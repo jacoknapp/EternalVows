@@ -189,10 +189,18 @@
           <span id="locationShort"></span>
         </div>
         <div class="btns" id="topButtons">
-          <!-- Buttons are injected from config; RSVP removed -->
+          <!-- Buttons are injected from config (RSVP, Schedule, etc.) -->
         </div>
       </div>
     </header>
+
+    <section id="rsvp">
+      <div class="container">
+        <h2>RSVP</h2>
+        <p class="muted" id="rsvpText">Please let us know if you can make it.</p>
+        <div class="btns" id="rsvpBtns"></div>
+      </div>
+    </section>
 
     <section id="story">
       <div class="container">
@@ -348,10 +356,12 @@
 
     function renderTopButtons(flags, venues) {
       const top = $('topButtons'); if (!top) return; top.innerHTML='';
+  // Put RSVP first as a primary call-to-action
+  if (flags.rsvp) addBtn(top, 'RSVP', '#rsvp', true);
       if (flags.story) addBtn(top, 'Story', '#story');
       if (flags.schedule) addBtn(top, 'Schedule', '#schedule');
       if (flags.venue) addBtn(top, venues.length > 1 ? 'Venues' : 'Venue', '#venue');
-      if (flags.photo) addBtn(top, 'Share Photos', '#photoshare', true);
+  if (flags.photo) addBtn(top, 'Share Photos', '#photoshare');
       if (flags.registry) addBtn(top, 'Registry', '#registry');
       if (flags.faqs) addBtn(top, 'FAQ', '#faqs');
     }
@@ -369,6 +379,36 @@
         `;
         grid.appendChild(card);
       }
+    }
+
+    function renderRSVP(cfg) {
+      const wrap = $('rsvp'); const btns = $('rsvpBtns'); if (btns) btns.innerHTML='';
+      // Support either a single object or an array of buttons
+      const rsvpCfg = cfg.rsvp || null;
+      let has = false;
+      let items = [];
+      if (Array.isArray(rsvpCfg)) {
+        items = rsvpCfg.filter(i => i && i.url && i.label);
+      } else if (rsvpCfg && typeof rsvpCfg === 'object') {
+        const single = [];
+        if (rsvpCfg.url) single.push({ label: rsvpCfg.label || rsvpCfg.cta || 'RSVP Now', url: rsvpCfg.url });
+        if (Array.isArray(rsvpCfg.buttons)) {
+          for (const b of rsvpCfg.buttons) if (b && b.url && b.label) single.push({ label: b.label, url: b.url });
+        }
+        items = single;
+        const copy = rsvpCfg.text || rsvpCfg.description || cfg.ui?.rsvpText || cfg.rsvpText;
+        if (copy) setText('rsvpText', String(copy));
+      } else {
+        // Back-compat flat keys
+        if (cfg.rsvpUrl) items = [{ label: cfg.rsvpLabel || 'RSVP Now', url: cfg.rsvpUrl }];
+        const copy = cfg.ui?.rsvpText || cfg.rsvpText; if (copy) setText('rsvpText', String(copy));
+      }
+      if (items.length) {
+        for (let i = 0; i < items.length; i++) addBtn(btns, items[i].label, items[i].url, i === 0);
+        has = true;
+      }
+      show(wrap, has);
+      return has;
     }
 
     function renderVenues(venues) {
@@ -431,12 +471,13 @@
       setText('storyText', cfg.story ?? '');
 
       const hasStory = !!(cfg.story && String(cfg.story).trim()); show($('story'), hasStory);
+  const hasRSVP = renderRSVP(cfg);
       const hasSchedule = Array.isArray(cfg.schedule) && cfg.schedule.length > 0; if (hasSchedule) renderSchedule(cfg.schedule); show($('schedule'), hasSchedule);
       const venues = normalizeVenues(cfg); const hasVenue = venues.length > 0; if (hasVenue) renderVenues(venues); show($('venue'), hasVenue);
       const hasPhoto = renderPhotoShare(cfg);
       const hasReg = renderRegistry(cfg.registry);
       const hasFaq = renderFaqs(cfg.faqs);
-      renderTopButtons({ story: hasStory, schedule: hasSchedule, venue: hasVenue, photo: hasPhoto, registry: hasReg, faqs: hasFaq }, venues);
+  renderTopButtons({ rsvp: hasRSVP, story: hasStory, schedule: hasSchedule, venue: hasVenue, photo: hasPhoto, registry: hasReg, faqs: hasFaq }, venues);
       setText('footerNote', cfg.ui?.footerNote ?? 'Made with ♥ for family and friends.');
     }
 

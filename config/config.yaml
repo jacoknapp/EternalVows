@@ -1,0 +1,75 @@
+coupleNames: "Partner One & Partner Two"
+dateDisplay: "Month 00, 20XX"
+locationShort: "City, ST"
+story: "Share a short story about how you met and what you're looking forward to on the big day."
+schedule:
+  - time: "3:00 PM"
+    title: "Ceremony"
+    details: "Ceremony location details"
+  - time: "4:00 PM"
+    title: "Cocktail Hour"
+    details: "Cocktail hour location details"
+  - time: "5:30 PM"
+    title: "Reception"
+    details: "Reception location details"
+venues:
+  Ceremony:
+    name: "Ceremony Venue Name"
+    address: "123 Chapel St, City, ST 00000"
+    mapUrl: "https://maps.google.com/?q=Ceremony+Venue"
+    mapCta: "Open Map"
+    notes: "Arrive 15 minutes early. Street parking available."
+  Reception:
+    name: "Reception Venue Name"
+    address: "999 Grand Ave, City, ST 00000"
+    mapUrl: "https://maps.google.com/?q=Reception+Venue"
+    mapCta: "Open Map"
+    notes: "Valet available. Dinner served at 6:00 PM."
+photoUpload:
+  label: "Upload to Shared Album"
+  url: "https://example.com/your-shared-album"
+  text: "We’d love to see the day through your eyes. Add your pics to our shared album!"
+rsvp:
+  text: "Please let us know if you can join us."
+  url: "https://example.com/rsvp"
+  label: "RSVP Now"
+registry:
+  - label: "Amazon"
+    url: "https://example.com/amazon"
+  - label: "Target"
+    url: "https://example.com/target"
+  - label: "Honeyfund"
+    url: "https://example.com/honeyfund"
+faqs:
+  - q: "Dress code?"
+    a: "Garden party chic (semi-formal). Comfortable shoes encouraged."
+  - q: "Kids welcome?"
+    a: "We love your little ones, but this will be an adults-only celebration."
+  - q: "Parking?"
+    a: "Street parking is limited; valet available; rideshare recommended."
+slideshow:
+  intervalMs: 6000
+  transitionMs: 1200
+  photoRefreshSeconds: 20
+  dynamicPhotosUrl: "/api/photos"
+ui:
+  title: "Partner One & Partner Two — Wedding"
+  monogram: "You’re invited to the wedding of"
+  footerNote: "With love, Partner One & Partner Two • #YourWeddingHashtag"
+  autoRefreshSeconds: 0
+  colors:
+    accent1: "#a3bcd6"
+    accent2: "#d7e5f3"
+    accent3: "#f7eddc"
+    text: "#ffffff"
+    ink: "#2b2a2a"
+    bgOverlay: "rgba(20,18,18,0.35)"
+    border: "rgba(255,255,255,0.12)"
+    card: "rgba(255,255,255,0.08)"
+    maxw: "1024px"
+    blur: "saturate(140%) blur(6px)"
+  background:
+    baseTop: "#2d2616"
+    baseBottom: "#1f1a10"
+    radial1: "rgba(234, 200, 94, 0.45)"
+    radial2: "rgba(255, 239, 189, 0.38)"
