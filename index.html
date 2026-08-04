@@ -415,12 +415,12 @@
       const grid = $('venueGrid'); if (!grid) return; grid.innerHTML = '';
       for (const vn of venues) {
         const card = create('div','card');
-        const labelHtml = vn.label ? `<span class="pill" style="margin-right:.5rem;">${vn.label}</span>` : '';
+        const labelHtml = vn.label ? `<span class="pill">${vn.label}</span>` : '';
         const mapCta = vn.mapCta || 'Open Map';
         const map = vn.mapUrl ? `<a class="pill" href="${vn.mapUrl}" target="_blank" rel="noopener">${mapCta}</a>` : '';
         card.innerHTML = `
-          <div class="row">
-            <div>${labelHtml}<strong>${vn.name ?? ''}</strong></div>
+          <div class="row" style="align-items:start;">
+            <div style="min-width:0;">${labelHtml ? `<div style="margin-bottom:.4rem;">${labelHtml}</div>` : ''}<strong>${vn.name ?? ''}</strong></div>
             ${map}
           </div>
           <div class="muted" style="margin-top:.4rem;">${vn.address ?? ''}</div>
