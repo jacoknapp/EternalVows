@@ -142,7 +142,10 @@ app.get('/config/config.json', async (_req, res) => {
 });
 
 // Static assets and routes
-app.use(express.static(ROOT, { extensions: ['html'], etag: true, lastModified: true }));
+// NOTE: only the directories the site actually serves are mounted. Serving all of
+// ROOT would also expose server.mjs, package*.json and node_modules/ over HTTP.
+// The index page is handled by the '/' route above; every other public asset lives
+// under /config, /photos or /favicon.
 app.use('/config', express.static(CONFIG_DIR, { etag: true, lastModified: true }));
 // Serve photos from config/photos under a stable /photos path used by the client
 app.use('/photos', express.static(PHOTO_DIR, { etag: true, lastModified: true }));
