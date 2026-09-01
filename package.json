@@ -8,8 +8,8 @@
   "gen:favicons": "node scripts/generate_favicons.mjs"
   },
   "dependencies": {
-  "express": "^5.1.0",
-  "yaml": "^2.5.1"
+  "express": "^5.2.1",
+  "yaml": "^2.9.0"
   },
   "devDependencies": {
     "png-to-ico": "^2.1.8",

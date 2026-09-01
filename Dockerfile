@@ -1,4 +1,7 @@
-FROM node:lts-alpine
+# Keep the container runtime aligned with the Node version used by CI. The
+# floating lts tag currently resolves to Node 24/npm 11, where this production
+# install can hang indefinitely.
+FROM node:22-alpine
 
 
 WORKDIR /app
