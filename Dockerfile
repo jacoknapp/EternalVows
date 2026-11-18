@@ -2,7 +2,7 @@
 # floating lts tag currently resolves to Node 24/npm 11, where this production
 # install can hang indefinitely.
 FROM node:22-alpine
-
+RUN apk upgrade --no-cache
 
 WORKDIR /app
 
